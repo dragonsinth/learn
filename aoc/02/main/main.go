@@ -17,7 +17,7 @@ forward 2
 
 func main1() {
 	x, y := 0, 0
-	for _, line := range strings.Split(real, "\n") {
+	for _, line := range strings.Split(sample, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -51,7 +51,7 @@ func main1() {
 
 func main() {
 	x, y, aim := 0, 0, 0
-	for _, line := range strings.Split(real, "\n") {
+	for _, line := range strings.Split(sample, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
