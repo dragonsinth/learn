@@ -9,7 +9,7 @@ import (
 
 var sample = `16,1,2,0,4,2,7,1,2,14`
 
-var input = real
+var input = sample
 
 func main() {
 	var crabPositions []int
