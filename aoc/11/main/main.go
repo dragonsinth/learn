@@ -18,7 +18,7 @@ var sample = `
 5283751526
 `
 
-var input = data
+var input = sample
 
 type puzzle struct {
 	state   [100]byte
