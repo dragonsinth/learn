@@ -120,7 +120,7 @@ func (p *Number) Magnitude() int {
 }
 
 func explode(n *Number) *Number {
-	ret, _, _ := explodeDepth(n, 1)
+	ret, _, _ := explodeDepth(n, 0)
 	return ret
 }
 
@@ -128,7 +128,7 @@ func explodeDepth(n *Number, depth int) (*Number, int, int) {
 	if n.isLiteral {
 		return n, 0, 0
 	}
-	if depth == 5 {
+	if depth == 4 {
 		return literal(0), n.left.literal, n.right.literal
 	}
 
