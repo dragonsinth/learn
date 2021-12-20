@@ -198,4 +198,3 @@ func main() {
 	puz.MarkRiskBfs()
 	puz.PrintRisk()
 }
-w
