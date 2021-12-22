@@ -30,7 +30,6 @@ const (
 	Ex2 = 2
 )
 
-
 type puzzle struct {
 	v             [][]byte
 	width, height int

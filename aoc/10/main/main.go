@@ -79,7 +79,7 @@ func main() {
 	}
 	fmt.Println(corruptScore)
 	sort.Ints(incompleteScores)
-	fmt.Println(incompleteScores[len(incompleteScores) / 2])
+	fmt.Println(incompleteScores[len(incompleteScores)/2])
 }
 
 var (

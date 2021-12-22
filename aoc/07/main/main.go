@@ -34,7 +34,7 @@ func main() {
 			// cost := n(n+1)/2
 			dist := abs(pos - crab)
 			cost += dist * (dist + 1) / 2
- 		}
+		}
 		fmt.Println(pos, cost)
 		if minCost > cost {
 			bestPos = pos

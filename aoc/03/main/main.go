@@ -152,5 +152,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(o2, co2, o2 * co2)
+	fmt.Println(o2, co2, o2*co2)
 }

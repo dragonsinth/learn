@@ -40,7 +40,6 @@ func main1() {
 	fmt.Println(count)
 }
 
-
 func main() {
 	input := parse(sample)
 	count := 0

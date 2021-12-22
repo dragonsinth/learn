@@ -61,7 +61,6 @@ func main() {
 	fmt.Println(best)
 }
 
-
 func main1() {
 	var last *Number
 	for _, line := range strings.Split(input, "\n") {

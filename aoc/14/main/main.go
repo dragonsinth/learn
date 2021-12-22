@@ -28,6 +28,7 @@ CN -> C
 `
 
 var input = sample
+
 const iters = 10
 
 type pair struct {
