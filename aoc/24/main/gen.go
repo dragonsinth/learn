@@ -90,13 +90,6 @@ var opCodes = map[string]opCode{
 
 type register int
 
-const (
-	W = register(iota)
-	X
-	Y
-	Z
-)
-
 func (r register) String() string {
 	return string(rune(r + 'w'))
 }

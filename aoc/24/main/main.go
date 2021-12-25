@@ -2,91 +2,77 @@ package main
 
 import (
 	"fmt"
-	"sort"
 )
 
 func main() {
-	main1()
-	fmt.Println()
+	results := findAll([]int64{}, 0, 0, 0, []int{4, 2, 6, 2}, steps)
+	for _, r := range results {
+		fmt.Printf("%+v = ", r.path)
 
-	if false {
-		survived := map[int64]bool{}
-		for v := int64(189); v <= 405; v++ {
-			// Which first six steps can survive the last 2?
-			if anySolution([]int{}, 0, 0, 0, 0, v, 6) {
-				survived[v] = true
-			}
+		// See what the first 4 steps yields
+		var x, y, z int64
+		for i := 0; i < 4; i++ {
+			_, x, y, z = steps[i](r.path[i], x, y, z)
 		}
-
-		// Which can survive the second 6?
-		old := toSlice(survived)
-		survived = map[int64]bool{}
-		for _, v := range old {
-			if anySolution([]int{}, 0, 0, v, 6, v, 6) {
-				survived[v] = true
-			}
-		}
-
-		// Which survive the last 2?
-		old = toSlice(survived)
-		survived = map[int64]bool{}
-		for _, v := range old {
-			if anySolution([]int{}, 0, 0, v, 12, 0, 2) {
-				survived[v] = true
-				fmt.Println(v)
-			}
-		}
+		fmt.Println(z, base26(z))
 	}
-
-	code := []int64{6, 2, 9, 1, 1, 9, 4, 1, 7, 1, 6, 1, 1, 1}
-
-	var x, y, z int64
-	for i, c := range code {
-		if i == 4 || i == 6 || i == 12 {
-			fmt.Println()
-		}
-		_, x, y, z = steps[i](int64(c), x, y, z)
-		fmt.Printf("%2d: %d -> (%d,%d,%d)\n", i, c, x, y, z)
-	}
+	fmt.Println(len(results))
 }
 
-func anySolution(choices []int, x, y, z int64, step int, expect int64, depth int) bool {
-	if depth == 0 {
-		if z == expect {
-			fmt.Println(expect, ":", choices)
-			return true
-		}
-		return false
-	}
-	for i := 1; i <= 9; i++ {
-		_, x, y, z := steps[step](int64(i), x, y, z)
-		if anySolution(append(choices, i), x, y, z, step+1, expect, depth-1) {
-			return true
-		}
-	}
-	return false
-}
+func findAll(path []int64, x, y, z int64, parts []int, fs []computefunc) []result {
+	var ret []result
 
-func toSlice(in map[int64]bool) []int64 {
-	ret := []int64{}
-	for k := range in {
-		ret = append(ret, k)
+	results := findSegments(path, x, y, z, fs[0:parts[0]])
+	if len(parts) > 1 {
+		// For each result, recurse the next.
+		for _, r := range results {
+			rec := findAll(r.path, 0, 0, r.z, parts[1:], fs[parts[0]:])
+			ret = append(ret, rec...)
+		}
+	} else {
+		// Merge the results
+		ret = append(ret, results...)
 	}
-	sort.Slice(ret, func(i, j int) bool {
-		return ret[i] < ret[j]
-	})
+
 	return ret
 }
 
-func main1() {
-	code := []int64{9, 9, 9, 1, 1, 9, 9, 3, 9, 4, 9, 6, 8, 4}
-
-	var x, y, z int64
-	for i, c := range code {
-		if i == 4 || i == 6 || i == 12 {
-			fmt.Println()
+func findSegments(path []int64, x, y, z int64, fs []computefunc) []result {
+	if len(fs) == 0 {
+		keep := x == 0 && y == 0 && z < 1000
+		if keep && len(path) == 14 {
+			keep = z == 0
 		}
-		_, x, y, z = steps[i](int64(c), x, y, z)
-		fmt.Printf("%2d: %d -> (%d,%d,%d)\n", i, c, x, y, z)
+		if keep {
+			return []result{
+				{
+					z:    z,
+					path: append([]int64{}, path...),
+				},
+			}
+		}
+		return nil
 	}
+	var ret []result
+	for i := 1; i <= 9; i++ {
+		_, x, y, z := fs[0](int64(i), x, y, z)
+		rec := findSegments(append(path, int64(i)), x, y, z, fs[1:])
+		ret = append(ret, rec...)
+	}
+	return ret
+}
+
+type result struct {
+	z    int64
+	path []int64
+}
+
+func base26(z int64) string {
+	var buf []byte
+	for z > 0 {
+		b := z % 26
+		z = z / 26
+		buf = append([]byte{byte(b + 'a')}, buf...)
+	}
+	return string(buf)
 }
