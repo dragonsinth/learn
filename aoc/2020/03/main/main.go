@@ -77,22 +77,22 @@ func main() {
 
 	fmt.Println(puz)
 
-	tcs := []struct{
+	tcs := []struct {
 		dx, dy int
-	} {
-		{1,1},
-		{3,1},
-		{5,1},
-		{7,1},
-		{1,2},
+	}{
+		{1, 1},
+		{3, 1},
+		{5, 1},
+		{7, 1},
+		{1, 2},
 	}
 
 	prod := 1
 	for _, tc := range tcs {
-		x,y := 0, 0
+		x, y := 0, 0
 		trees := 0
 		for y < puz.height {
-			if puz.v[y][x % puz.width] != 0 {
+			if puz.v[y][x%puz.width] != 0 {
 				trees++
 			}
 			x += tc.dx
