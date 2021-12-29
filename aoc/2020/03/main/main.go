@@ -20,7 +20,7 @@ var sample = `
 `
 
 var (
-	input = data
+	input = sample
 )
 
 type puzzle struct {
