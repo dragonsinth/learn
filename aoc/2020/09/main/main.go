@@ -62,7 +62,7 @@ func main() {
 
 	for i := range nums {
 		if vals := isSpooky(spooky, nums[i:]); vals != nil {
-			fmt.Println(vals, vals[0] + vals[len(vals) - 1])
+			fmt.Println(vals, vals[0]+vals[len(vals)-1])
 			break
 		}
 	}
