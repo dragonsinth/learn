@@ -1,1 +1,1 @@
-module "github.com/aaronbearon/learn/aoc"
+module "github.com/dragonsinth/learn/aoc"
