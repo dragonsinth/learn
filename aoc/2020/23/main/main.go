@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 	"time"
 )
 
@@ -24,113 +23,85 @@ func main() {
 		fmt.Println(time.Since(start))
 	}()
 
-	if *fSz < 256 {
-		//f1, _ := os.Create("1.txt")
-		//defer f1.Close()
-		//w = f1
-		w = io.Writer(os.Stdout)
-		run1(*fInput, *fRounds, *fSz)
-	}
-	//f2, _ := os.Create("2.txt")
-	//defer f2.Close()
-	//w = f2
-	run2(*fInput, *fRounds, *fSz)
-	//w = nil
-	//run2(*fInput, 10000, 1000000)
-	w = nil
-	//run2(*fInput, 100000, 1000000)
+	//run2(*fInput, *fRounds, *fSz)
+	run3(*fInput, *fRounds, *fSz)
 }
 
-func run2(input string, rounds int, size int) {
-	sz := int32(size)
-	buf := make([]int32, sz*2)
-	state, newState := buf[:sz], buf[sz:]
+type node struct {
+	v int32
+	n *node
+}
+
+func run3(input string, rounds int, size int) {
+	if rounds*size < 10000 {
+		w = os.Stdout
+	}
+	nodes := make([]node, size)
+	nodesByVal := make([]*node, size+1)
+
 	for i, c := range input {
-		state[i] = c - '0'
+		v := c - '0'
+		nodes[i].v = v
+		nodesByVal[v] = &nodes[i]
 	}
-	for i := len(input); i < len(state); i++ {
-		state[i] = int32(i + 1)
+	for i := len(input); i < size; i++ {
+		v := int32(i + 1)
+		nodes[i].v = v
+		nodesByVal[v] = &nodes[i]
 	}
 
+	for i := 0; i < size-1; i++ {
+		nodes[i].n = &nodes[i+1]
+	}
+	nodes[size-1].n = &nodes[0]
+	sz := int32(size)
+
+	head := &nodes[0]
 	for move := 0; move < rounds; move++ {
-		if rounds-move <= 100 {
-			w = os.Stdout
-		}
 		fmtPrintf("-- move %d --\n", move+1)
-		//fmtPrintf("cups: %+v\n", state)
+		fmtPrintf("cups: %+v\n", render(head))
 
-		pickUp := state[1:4]
-		fmtPrintf("pick up: %+v\n", pickUp)
+		a := head.n
+		b := a.n
+		c := b.n
+		head.n = c.n
 
-	outer:
-		for tgt := state[0] - 1; true; tgt = (tgt + sz) % (sz + 1) {
-			if contains(pickUp, tgt) || tgt == 0 {
+		fmtPrintf("pick up: %+v\n", []int32{a.v, b.v, c.v})
+
+		tgt := head.v - 1
+		for ; true; tgt = (tgt + sz) % (sz + 1) {
+			if tgt == 0 || tgt == a.v || tgt == b.v || tgt == c.v {
 				continue
-			}
-			for idx, v := range state {
-				if v == tgt {
-					// found insertion point; insert after
-					fmtPrintf("destination: %d at %d\n", v, idx)
-					idx++
-
-					// Create a new state which is:
-					// 1) Elements 4:idx
-					// 2) Elements pickUp
-					// 3) Elements idx:
-					// 4) Element 0
-					concat(newState, state[4:idx], pickUp, state[idx:], state[0:1])
-
-					state, newState = newState, state
-					break outer
-				}
-			}
-			panic("should not get here")
-		}
-
-		fmtPrintln()
-	}
-
-	// Find the 1 cup
-	if len(state) <= 100 {
-		fmt.Println(state)
-	}
-	for idx, v := range state {
-		if v == 1 {
-			a := int32(idx+1) % sz
-			b := int32(idx+2) % sz
-			fmt.Println(state[a], state[b], int(state[a])*int(state[b]))
-			if len(state) <= 100 {
-				sort.Slice(state, func(i, j int) bool {
-					return state[i] < state[j]
-				})
-				fmt.Println(state)
 			}
 			break
 		}
+
+		// insert after
+		t := nodesByVal[tgt]
+		c.n = t.n
+		t.n = a
+
+		head = head.n
+		fmtPrintln()
 	}
+
+	fmtPrintln(render(head))
+
+	one := nodesByVal[1]
+	a := one.n.v
+	b := one.n.n.v
+	fmt.Println(a, b, int(a)*int(b))
 }
 
-func contains(up []int32, tgt int32) bool {
-	for _, v := range up {
-		if v == tgt {
-			return true
-		}
+func render(head *node) []int32 {
+	if w == nil {
+		return nil
 	}
-	return false
-}
-
-func concat(dst []int32, in ...[]int32) {
-	idx := 0
-	for _, e := range in {
-		n := copy(dst[idx:], e)
-		if n != len(e) {
-			panic(n)
-		}
-		idx += n
+	ret := []int32{head.v}
+	for t := head.n; t != head; t = t.n {
+		ret = append(ret, t.v)
 	}
-	if idx != len(dst) {
-		panic(idx)
-	}
+	return ret
 }
 
 func fmtPrintln(args ...interface{}) {

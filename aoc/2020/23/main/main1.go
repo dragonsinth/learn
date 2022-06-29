@@ -21,7 +21,7 @@ func run1(input string, rounds int, size int) {
 
 		pickUp := state[1:4]
 		fmtPrintf("pick up: %+v\n", pickUp)
-		newState := concat2(state[0:1], state[4:])
+		newState := concat(state[0:1], state[4:])
 
 	outer:
 		for tgt := state[0] - 1; true; tgt = (tgt + sz) % (sz + 1) {
@@ -30,7 +30,7 @@ func run1(input string, rounds int, size int) {
 					// found insertion point; insert after
 					idx++
 					fmtPrintf("destination: %d\n", v)
-					newState = concat2(newState[:idx], pickUp, newState[idx:])
+					newState = concat(newState[:idx], pickUp, newState[idx:])
 					// rotate
 					state = append(newState[1:], newState[0])
 					break outer
@@ -57,7 +57,7 @@ func run1(input string, rounds int, size int) {
 	}
 }
 
-func concat2(in ...[]byte) []byte {
+func concat(in ...[]byte) []byte {
 	ret := make([]byte, 0, 10)
 	for _, e := range in {
 		ret = append(ret, e...)
