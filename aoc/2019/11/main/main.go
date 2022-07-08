@@ -36,9 +36,7 @@ func (d direction) String() string {
 }
 
 func main() {
-	codes := parseIntCodes("99")
-	m := NewIntMachine(codes)
-	go m.Run()
+	codes := parseIntCodes(`99`)
 
 	var pos, max point
 	pointData := map[point]bool{
@@ -46,29 +44,20 @@ func main() {
 	}
 	dir := N
 
-	for i := 0; true; i++ {
-		select {
-		case m.Writer() <- boolVal(pointData[pos]):
-		case _, ok := <-m.Reader():
-			if !ok {
-				fmt.Println(len(pointData))
+	in := func() int {
+		return boolVal(pointData[pos])
+	}
 
-				for y := 0; y <= max.y; y++ {
-					for x := 0; x <= max.x; x++ {
-						if pointData[point{x, y}] {
-							fmt.Print("#")
-						} else {
-							fmt.Print(".")
-						}
-					}
-					fmt.Println()
-				}
-				return // done
-			}
-			panic("should not get here")
+	var buf []int
+	i := 0
+	out := func(v int) {
+		buf = append(buf, v)
+		if len(buf) < 2 {
+			return
 		}
+		color, face := buf[0], buf[1]
+		buf = nil
 
-		color, face := <-m.Reader(), <-m.Reader()
 		pointData[pos] = color == 1
 
 		if face == 0 {
@@ -84,5 +73,22 @@ func main() {
 			max.y = pos.y
 		}
 		fmt.Printf("%d: %d %s (%d,%d)\n", i, color, dir, pos.x, pos.y)
+		i++
+	}
+
+	m := NewIntMachine(codes, in, out)
+	m.Run()
+
+	fmt.Println(len(pointData))
+
+	for y := 0; y <= max.y; y++ {
+		for x := 0; x <= max.x; x++ {
+			if pointData[point{x, y}] {
+				fmt.Print("#")
+			} else {
+				fmt.Print(".")
+			}
+		}
+		fmt.Println()
 	}
 }

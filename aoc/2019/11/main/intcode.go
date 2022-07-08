@@ -6,13 +6,16 @@ import (
 	"strings"
 )
 
-func NewIntMachine(intCodes []int) *IntMachine {
+type input func() int
+type output func(v int)
+
+func NewIntMachine(intCodes []int, in input, out output) *IntMachine {
 	p := &IntMachine{
-		pc:     0,
-		rel:    0,
-		mem:    make([]int, allocSize(len(intCodes))),
-		input:  make(chan int),
-		output: make(chan int),
+		pc:  0,
+		rel: 0,
+		mem: make([]int, allocSize(len(intCodes))),
+		in:  in,
+		out: out,
 	}
 	copy(p.mem, intCodes)
 	return p
@@ -27,23 +30,14 @@ func allocSize(min int) int {
 }
 
 type IntMachine struct {
-	pc     int // program counter
-	rel    int // relative base
-	mem    []int
-	input  chan int
-	output chan int
-}
-
-func (m *IntMachine) Writer() chan<- int {
-	return m.input
-}
-
-func (m *IntMachine) Reader() <-chan int {
-	return m.output
+	pc  int // program counter
+	rel int // relative base
+	mem []int
+	in  input
+	out output
 }
 
 func (m *IntMachine) Run() {
-	defer close(m.output)
 	for {
 		op := m.mem[m.pc]
 		m.pc++
@@ -63,10 +57,10 @@ func (m *IntMachine) Run() {
 			*c = a * b
 		case 3:
 			c := m.addr(op / 100)
-			*c = <-m.input
+			*c = m.in()
 		case 4:
 			a := m.load(op / 100)
-			m.output <- a
+			m.out(a)
 		case 5:
 			a := m.load(op / 100)
 			b := m.load(op / 1000)
