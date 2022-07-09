@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/dragonsinth/learn/aoc/2019/intcode"
+)
 
 type point struct {
 	x, y int
@@ -36,7 +39,7 @@ func (d direction) String() string {
 }
 
 func main() {
-	codes := parseIntCodes(`99`)
+	codes := intcode.Parse(`99`)
 
 	var pos, max point
 	pointData := map[point]bool{
@@ -45,7 +48,7 @@ func main() {
 	dir := N
 
 	in := func() int {
-		return boolVal(pointData[pos])
+		return intcode.BoolVal(pointData[pos])
 	}
 
 	var buf []int
@@ -76,7 +79,7 @@ func main() {
 		i++
 	}
 
-	m := NewIntMachine(codes, in, out)
+	m := intcode.NewIntMachine(codes, in, out)
 	m.Run()
 
 	fmt.Println(len(pointData))

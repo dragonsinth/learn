@@ -2,8 +2,7 @@ package main
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
+	"github.com/dragonsinth/learn/aoc/2019/intcode"
 )
 
 var samples1 = []string{
@@ -24,29 +23,27 @@ func main() {
 
 func main2() {
 	for _, in := range samples2 {
-		codes := parse(in)
+		codes := intcode.Parse(in)
 
 		bestVal := 0
 		var best []int
 		Perm([]int{5, 6, 7, 8, 9}, func(inputs []int) {
 			in := make(chan int, 1)
 			last := in
-			var progs []*prog
 			for _, input := range inputs {
 				last <- input
 				next := make(chan int, 1)
-				p := &prog{
-					pc:     0,
-					codes:  append([]int{}, codes...),
-					input:  last,
-					output: next,
-				}
+				prev := last
+				m := intcode.NewIntMachine(codes, func() int {
+					return <-prev
+				}, func(v int) {
+					next <- v
+				})
 				last = next
-				progs = append(progs, p)
-			}
-
-			for _, p := range progs {
-				go p.run()
+				go func() {
+					defer close(next)
+					m.Run()
+				}()
 			}
 
 			answer := 0
@@ -69,29 +66,27 @@ func main2() {
 
 func main1() {
 	for _, in := range samples1 {
-		codes := parse(in)
+		codes := intcode.Parse(in)
 
 		bestVal := 0
 		var best []int
 		Perm([]int{0, 1, 2, 3, 4}, func(inputs []int) {
 			in := make(chan int, 1)
 			last := in
-			var progs []*prog
 			for _, input := range inputs {
 				last <- input
 				next := make(chan int, 1)
-				p := &prog{
-					pc:     0,
-					codes:  append([]int{}, codes...),
-					input:  last,
-					output: next,
-				}
+				prev := last
+				m := intcode.NewIntMachine(codes, func() int {
+					return <-prev
+				}, func(v int) {
+					next <- v
+				})
 				last = next
-				progs = append(progs, p)
-			}
-
-			for _, p := range progs {
-				go p.run()
+				go func() {
+					defer close(next)
+					m.Run()
+				}()
 			}
 
 			in <- 0
@@ -102,114 +97,5 @@ func main1() {
 		})
 
 		fmt.Println(bestVal, best)
-	}
-}
-
-func parse(line string) []int {
-	vals := strings.Split(line, ",")
-	var codes []int
-	for _, v := range vals {
-		codes = append(codes, mustInt(v))
-	}
-	return codes
-}
-
-type prog struct {
-	pc     int
-	codes  []int
-	input  <-chan int
-	output chan<- int
-}
-
-func (p *prog) run() {
-	defer close(p.output)
-	for {
-		op := p.codes[p.pc]
-		p.pc++
-		if op == 99 {
-			return
-		}
-		switch op % 100 {
-		case 1:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			c := p.addr(op / 10000)
-			*c = a + b
-		case 2:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			c := p.addr(op / 10000)
-			*c = a * b
-		case 3:
-			c := p.addr(op / 100)
-			*c = <-p.input
-		case 4:
-			a := p.load(op / 100)
-			p.output <- a
-		case 5:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			if a != 0 {
-				p.pc = b
-			}
-		case 6:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			if a == 0 {
-				p.pc = b
-			}
-		case 7:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			c := p.addr(op / 10000)
-			*c = boolVal(a < b)
-		case 8:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			c := p.addr(op / 10000)
-			*c = boolVal(a == b)
-		default:
-			panic(op)
-		}
-	}
-}
-
-func (p *prog) load(op int) int {
-	v := p.codes[p.pc]
-	p.pc++
-	switch op % 10 {
-	case 0:
-		return p.codes[v]
-	case 1:
-		return v
-	default:
-		panic(op)
-	}
-}
-
-func (p *prog) addr(op int) *int {
-	a := p.codes[p.pc]
-	p.pc++
-	switch op % 10 {
-	case 0:
-		return &p.codes[a]
-	default:
-		panic(op)
-	}
-}
-
-func boolVal(v bool) int {
-	if v {
-		return 1
-	} else {
-		return 0
-	}
-}
-
-func mustInt(s string) int {
-	if v, err := strconv.Atoi(s); err != nil {
-		panic(fmt.Sprint(s, err))
-	} else {
-		return v
 	}
 }

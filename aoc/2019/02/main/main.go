@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"strconv"
+	"github.com/dragonsinth/learn/aoc/2019/intcode"
 	"strings"
 )
 
@@ -24,56 +24,23 @@ func main() {
 			continue
 		}
 
-		run(parse(line))
+		codes := intcode.Parse(line)
+		m := intcode.NewIntMachine(codes, nil, nil)
+		m.Run()
+		fmt.Println(m.Read(0))
 	}
 
 	for i := 0; i < 100; i++ {
 		for j := 0; j < 100; j++ {
-			prog := parse(input)
-			prog[1] = i
-			prog[2] = j
-			v := run(prog)
-			if v == 19690720 {
+			codes := intcode.Parse(input)
+			codes[1] = i
+			codes[2] = j
+			m := intcode.NewIntMachine(codes, nil, nil)
+			m.Run()
+			if v := m.Read(0); v == 19690720 {
 				fmt.Println(i, j)
 				return
 			}
 		}
-	}
-}
-
-func parse(line string) []int {
-	vals := strings.Split(line, ",")
-	var prog []int
-	for _, v := range vals {
-		prog = append(prog, mustInt(v))
-	}
-	return prog
-}
-
-func run(prog []int) int {
-	pc := 0
-	for {
-		if prog[pc] == 99 {
-			//fmt.Println(prog)
-			return prog[0]
-		}
-		ai, bi, ci := prog[pc+1], prog[pc+2], prog[pc+3]
-		switch prog[pc] {
-		case 1:
-			prog[ci] = prog[ai] + prog[bi]
-		case 2:
-			prog[ci] = prog[ai] * prog[bi]
-		default:
-			panic(prog[pc])
-		}
-		pc += 4
-	}
-}
-
-func mustInt(s string) int {
-	if v, err := strconv.Atoi(s); err != nil {
-		panic(fmt.Sprint(s, err))
-	} else {
-		return v
 	}
 }

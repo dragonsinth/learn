@@ -2,8 +2,7 @@ package main
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
+	"github.com/dragonsinth/learn/aoc/2019/intcode"
 )
 
 var samples = []string{
@@ -17,123 +16,15 @@ var samples = []string{
 }
 
 func main() {
-	for _, in := range samples {
-		codes := parse(in)
-		p := &prog{
-			pc:    0,
-			codes: codes,
-			input: []int{8},
+	for _, input := range []int{7, 8, 9} {
+		for _, in := range samples {
+			codes := intcode.Parse(in)
+			m := intcode.NewIntMachine(codes, func() int {
+				return input
+			}, func(v int) {
+				fmt.Println(v)
+			})
+			m.Run()
 		}
-		p.run()
-		fmt.Println(p.output)
-	}
-}
-
-func parse(line string) []int {
-	vals := strings.Split(line, ",")
-	var codes []int
-	for _, v := range vals {
-		codes = append(codes, mustInt(v))
-	}
-	return codes
-}
-
-type prog struct {
-	pc     int
-	codes  []int
-	input  []int
-	output []int
-}
-
-func (p *prog) run() {
-	for {
-		op := p.codes[p.pc]
-		p.pc++
-		if op == 99 {
-			return
-		}
-		switch op % 100 {
-		case 1:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			c := p.addr(op / 10000)
-			*c = a + b
-		case 2:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			c := p.addr(op / 10000)
-			*c = a * b
-		case 3:
-			c := p.addr(op / 100)
-			*c = p.input[0]
-			p.input = p.input[1:]
-		case 4:
-			a := p.load(op / 100)
-			p.output = append(p.output, a)
-		case 5:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			if a != 0 {
-				p.pc = b
-			}
-		case 6:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			if a == 0 {
-				p.pc = b
-			}
-		case 7:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			c := p.addr(op / 10000)
-			*c = boolVal(a < b)
-		case 8:
-			a := p.load(op / 100)
-			b := p.load(op / 1000)
-			c := p.addr(op / 10000)
-			*c = boolVal(a == b)
-		default:
-			panic(op)
-		}
-	}
-}
-
-func (p *prog) load(op int) int {
-	v := p.codes[p.pc]
-	p.pc++
-	switch op % 10 {
-	case 0:
-		return p.codes[v]
-	case 1:
-		return v
-	default:
-		panic(op)
-	}
-}
-
-func (p *prog) addr(op int) *int {
-	a := p.codes[p.pc]
-	p.pc++
-	switch op % 10 {
-	case 0:
-		return &p.codes[a]
-	default:
-		panic(op)
-	}
-}
-
-func boolVal(v bool) int {
-	if v {
-		return 1
-	} else {
-		return 0
-	}
-}
-
-func mustInt(s string) int {
-	if v, err := strconv.Atoi(s); err != nil {
-		panic(fmt.Sprint(s, err))
-	} else {
-		return v
 	}
 }

@@ -1,4 +1,4 @@
-package main
+package intcode
 
 import (
 	"fmt"
@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-func NewIntMachine(intCodes []int) *IntMachine {
+func NewIntMachine(intCodes []int, input func() int, output func(v int)) *IntMachine {
 	p := &IntMachine{
 		pc:     0,
 		rel:    0,
 		mem:    make([]int, allocSize(len(intCodes))),
-		input:  make(chan int),
-		output: make(chan int),
+		input:  input,
+		output: output,
 	}
 	copy(p.mem, intCodes)
 	return p
@@ -30,20 +30,15 @@ type IntMachine struct {
 	pc     int // program counter
 	rel    int // relative base
 	mem    []int
-	input  chan int
-	output chan int
+	input  func() int
+	output func(v int)
 }
 
-func (m *IntMachine) Writer() chan<- int {
-	return m.input
-}
-
-func (m *IntMachine) Reader() <-chan int {
-	return m.output
+func (m *IntMachine) Read(addr int) int {
+	return m.mem[addr]
 }
 
 func (m *IntMachine) Run() {
-	defer close(m.output)
 	for {
 		op := m.mem[m.pc]
 		m.pc++
@@ -63,10 +58,10 @@ func (m *IntMachine) Run() {
 			*c = a * b
 		case 3:
 			c := m.addr(op / 100)
-			*c = <-m.input
+			*c = m.input()
 		case 4:
 			a := m.load(op / 100)
-			m.output <- a
+			m.output(a)
 		case 5:
 			a := m.load(op / 100)
 			b := m.load(op / 1000)
@@ -83,12 +78,12 @@ func (m *IntMachine) Run() {
 			a := m.load(op / 100)
 			b := m.load(op / 1000)
 			c := m.addr(op / 10000)
-			*c = boolVal(a < b)
+			*c = BoolVal(a < b)
 		case 8:
 			a := m.load(op / 100)
 			b := m.load(op / 1000)
 			c := m.addr(op / 10000)
-			*c = boolVal(a == b)
+			*c = BoolVal(a == b)
 		case 9:
 			a := m.load(op / 100)
 			m.rel += a
@@ -136,7 +131,7 @@ func (m *IntMachine) ensureMem(addr int) *int {
 	return &m.mem[addr]
 }
 
-func boolVal(v bool) int {
+func BoolVal(v bool) int {
 	if v {
 		return 1
 	} else {
@@ -144,7 +139,7 @@ func boolVal(v bool) int {
 	}
 }
 
-func parseIntCodes(line string) []int {
+func Parse(line string) []int {
 	vals := strings.Split(line, ",")
 	var codes []int
 	for _, v := range vals {

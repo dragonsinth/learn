@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/dragonsinth/learn/aoc/2019/intcode"
 	"github.com/nsf/termbox-go"
 	"time"
 )
@@ -22,7 +23,7 @@ func main() {
 		defer termbox.Close()
 	}
 
-	codes := parseIntCodes(data)
+	codes := intcode.Parse(data)
 	codes[0] = 2
 
 	var screen [][]byte
@@ -110,7 +111,7 @@ func main() {
 		}
 	}
 
-	m := NewIntMachine(codes, in, out)
+	m := intcode.NewIntMachine(codes, in, out)
 	m.Run()
 	if curses {
 		termbox.Close()
@@ -120,7 +121,7 @@ func main() {
 }
 
 func main1() {
-	codes := parseIntCodes(data)
+	codes := intcode.Parse(data)
 
 	var screen [][]byte
 	for i := 0; i < 21; i++ {
@@ -137,7 +138,7 @@ func main1() {
 		}
 	}
 
-	m := NewIntMachine(codes, nil, out)
+	m := intcode.NewIntMachine(codes, nil, out)
 	m.Run()
 	if len(buf) != 0 {
 		panic(buf)

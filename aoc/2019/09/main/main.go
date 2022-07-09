@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/dragonsinth/learn/aoc/2019/intcode"
 )
 
 var samples = []string{
@@ -12,32 +13,22 @@ var samples = []string{
 
 func main() {
 	for _, input := range samples {
-		codes := parseIntCodes(input)
-		m := NewIntMachine(codes)
-		go m.Run()
-		for {
-			v, ok := <-m.Reader()
-			if !ok {
-				break
-			}
+		codes := intcode.Parse(input)
+		m := intcode.NewIntMachine(codes, nil, func(v int) {
 			fmt.Println(v)
-		}
+		})
+		m.Run()
 		fmt.Println()
 	}
 
 	for _, startVal := range []int{1, 2} {
-		codes := parseIntCodes(`99`)
-		m := NewIntMachine(codes)
-		go m.Run()
-
-		m.Writer() <- startVal
-		for {
-			v, ok := <-m.Reader()
-			if !ok {
-				break
-			}
+		codes := intcode.Parse(`99`)
+		m := intcode.NewIntMachine(codes, func() int {
+			return startVal
+		}, func(v int) {
 			fmt.Println(v)
-		}
+		})
+		m.Run()
 		fmt.Println()
 	}
 }
