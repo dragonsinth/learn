@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/dragonsinth/learn/aoc/2019/intcode"
-	"github.com/nsf/termbox-go"
+	"github.com/dragonsinth/learn/aoc/termbox"
+	"io"
+	"os"
 	"time"
 )
 
@@ -68,16 +70,8 @@ const (
 )
 
 func main() {
-	curses := true
-	if curses {
-		err := termbox.Init()
-		if err != nil {
-			fmt.Println(err)
-			curses = false
-		} else {
-			defer termbox.Close()
-		}
-	}
+	term := termbox.New(true)
+	defer term.Stop()
 
 	origin := pt{21, 21}
 	pos := origin
@@ -99,40 +93,26 @@ func main() {
 		maze[pt{max.X, y}] = WALL
 	}
 
-	renderMap := func() {
-		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-		for y := min.Y; y <= max.Y; y++ {
-			for x := min.X; x <= max.X; x++ {
-				p := pt{x, y}
-				termbox.SetCell(x-min.X, y-min.Y, maze[p].Rune(), termbox.ColorWhite, termbox.ColorBlack)
-			}
-		}
-		status := fmt.Sprintf("size: %d, min: %+v, max: %+v", len(maze), min, max)
-		for x, c := range status {
-			termbox.SetCell(x, max.Y-min.Y+1, c, termbox.ColorWhite, termbox.ColorBlack)
-		}
-		termbox.Flush()
-		time.Sleep(time.Millisecond)
-	}
-
-	printMap := func() {
+	renderMap := func(ifDisabled io.Writer) {
+		var data [][]byte
 		for y := min.Y; y <= max.Y; y++ {
 			var line []byte
 			for x := min.X; x <= max.X; x++ {
 				p := pt{x, y}
 				line = append(line, byte(maze[p].Rune()))
 			}
-			fmt.Println(string(line))
+			data = append(data, line)
 		}
-		fmt.Println()
+		term.Render(data, ifDisabled)
+		if term.Enabled() {
+			time.Sleep(time.Millisecond)
+		} else if ifDisabled != nil {
+			_, _ = fmt.Fprintln(ifDisabled)
+		}
 	}
 
 	in := func() int {
-		if curses {
-			renderMap()
-		} else {
-			fmt.Println("pos:", pos)
-		}
+		renderMap(nil)
 
 		// wall hug
 		for _, d := range lastMoveDir.order() {
@@ -193,15 +173,10 @@ func main() {
 		m.Run()
 	}()
 	<-result
-	if curses {
-		termbox.Close()
-		curses = false
-	}
+
+	term.Stop()
 	fmt.Println("oxy:", oxygen)
-	fmt.Println("min:", min)
-	fmt.Println("max:", max)
-	fmt.Println(len(maze), (max.X-min.X+1)*(max.Y-min.Y+1))
-	printMap()
+	renderMap(os.Stdout)
 
 	distFromOrigin := computeDistMap(maze, origin)
 	distFromOxygen := computeDistMap(maze, oxygen)

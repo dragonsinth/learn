@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/dragonsinth/learn/aoc/2019/intcode"
-	"github.com/nsf/termbox-go"
+	"github.com/dragonsinth/learn/aoc/termbox"
+	"io"
+	"os"
 	"time"
 )
 
@@ -14,14 +16,8 @@ const (
 )
 
 func main() {
-	curses := true
-	err := termbox.Init()
-	if err != nil {
-		fmt.Println(err)
-		curses = false
-	} else {
-		defer termbox.Close()
-	}
+	term := termbox.New(true)
+	defer term.Stop()
 
 	codes := intcode.Parse(data)
 	codes[0] = 2
@@ -41,31 +37,22 @@ func main() {
 	joy := 0
 	score := 0
 
-	render := func() {
-		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-		for y, line := range screen {
-			for x, v := range line {
-				if curses {
-					termbox.SetCell(x, y, rune(" #*-O"[v]), termbox.ColorWhite, termbox.ColorBlack)
-				} else {
-					fmt.Print(string(" #*-O"[v]))
-				}
+	render := func(ifDisabled io.Writer) {
+		var data [][]byte
+		for _, line := range screen {
+			var outline []byte
+			for _, v := range line {
+				outline = append(outline, " #*-O"[v])
 			}
-			if !curses {
-				fmt.Println()
-			}
+			data = append(data, outline)
 		}
+
 		tagLine := fmt.Sprint(score, ball, ballDir, paddle, joy)
-		if curses {
-			for x, v := range tagLine {
-				termbox.SetCell(x, h, v, termbox.ColorWhite, termbox.ColorBlack)
-			}
-			for x := len(tagLine); x < w; x++ {
-				termbox.SetCell(x, h, ' ', termbox.ColorWhite, termbox.ColorBlack)
-			}
-			termbox.Flush()
+		data = append(data, []byte(tagLine))
+		term.Render(data, ifDisabled)
+		if term.Enabled() {
 			time.Sleep(1 * time.Millisecond)
-		} else {
+		} else if ifDisabled == nil {
 			fmt.Println(tagLine)
 		}
 	}
@@ -83,7 +70,7 @@ func main() {
 	}
 
 	in := func() int {
-		render()
+		render(nil)
 		updateJoy()
 		return joy
 	}
@@ -113,11 +100,8 @@ func main() {
 
 	m := intcode.NewIntMachine(codes, in, out)
 	m.Run()
-	if curses {
-		termbox.Close()
-		curses = false
-		render()
-	}
+	term.Stop()
+	render(os.Stdout)
 }
 
 func main1() {
