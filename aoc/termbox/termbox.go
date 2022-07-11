@@ -8,7 +8,14 @@ import (
 	"syscall"
 )
 
-func New(enable bool) *terminal {
+type Terminal interface {
+	Start()
+	Stop()
+	Render(data [][]byte, ifDisabled io.Writer)
+	Enabled() bool
+}
+
+func New(enable bool) Terminal {
 	c := &terminal{}
 	if enable {
 		c.Start()
@@ -90,13 +97,20 @@ func (c *terminal) Render(data [][]byte, ifDisabled io.Writer) {
 	defer c.mu.Unlock()
 	if !c.enabled {
 		if ifDisabled != nil {
-			for _, line := range data {
-				_, _ = fmt.Fprintln(ifDisabled, string(line))
-			}
+			RenderPlain(data, ifDisabled)
 		}
-		return
+	} else {
+		Render(data)
 	}
+}
 
+func (c *terminal) Enabled() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.enabled
+}
+
+func Render(data [][]byte) {
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	defer termbox.Flush()
 	for y, line := range data {
@@ -106,8 +120,8 @@ func (c *terminal) Render(data [][]byte, ifDisabled io.Writer) {
 	}
 }
 
-func (c *terminal) Enabled() bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.enabled
+func RenderPlain(data [][]byte, w io.Writer) {
+	for _, line := range data {
+		_, _ = fmt.Fprintln(w, string(line))
+	}
 }
