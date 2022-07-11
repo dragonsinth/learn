@@ -9,47 +9,10 @@ import (
 )
 
 func New(enable bool) *terminal {
-	err := termbox.Init()
-	if err != nil {
-		fmt.Println(err)
-		enable = false
-	}
-
-	c := &terminal{
-		enabled: enable,
-		done:    make(chan struct{}),
-	}
-
+	c := &terminal{}
 	if enable {
-		go func() {
-			defer close(c.done)
-			for {
-				ev := termbox.PollEvent()
-				switch ev.Type {
-				case termbox.EventKey:
-					if ev.Ch == 0 {
-						switch ev.Key {
-						case termbox.KeyCtrlC:
-							c.stop(false)
-							// resend the signal
-							_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
-							return
-						case termbox.KeyEsc:
-							c.stop(false)
-							return
-						}
-					}
-				case termbox.EventError:
-					panic(ev.Err)
-
-				case termbox.EventInterrupt:
-					return
-				}
-
-			}
-		}()
+		c.Start()
 	}
-
 	return c
 }
 
@@ -59,6 +22,49 @@ type terminal struct {
 	done    chan struct{}
 }
 
+func (c *terminal) Start() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.enabled {
+		return
+	}
+
+	if err := termbox.Init(); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	c.enabled = true
+	c.done = make(chan struct{})
+	go func() {
+		defer close(c.done)
+		for {
+			ev := termbox.PollEvent()
+			switch ev.Type {
+			case termbox.EventKey:
+				if ev.Ch == 0 {
+					switch ev.Key {
+					case termbox.KeyCtrlC:
+						c.stop(false)
+						// resend the signal
+						_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+						return
+					case termbox.KeyEsc:
+						c.stop(false)
+						return
+					}
+				}
+			case termbox.EventError:
+				panic(ev.Err)
+
+			case termbox.EventInterrupt:
+				return
+			}
+
+		}
+	}()
+}
+
 func (c *terminal) Stop() {
 	c.stop(true)
 }
@@ -66,14 +72,17 @@ func (c *terminal) Stop() {
 func (c *terminal) stop(interrupt bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.enabled {
-		termbox.Close()
-		if interrupt {
-			termbox.Interrupt()
-			<-c.done
-		}
-		c.enabled = false
+	if !c.enabled {
+		return
 	}
+
+	termbox.Close()
+	if interrupt {
+		termbox.Interrupt()
+		<-c.done
+	}
+	c.done = nil
+	c.enabled = false
 }
 
 func (c *terminal) Render(data [][]byte, ifDisabled io.Writer) {

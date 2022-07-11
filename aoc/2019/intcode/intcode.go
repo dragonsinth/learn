@@ -124,7 +124,7 @@ func (m *IntMachine) addr(op int) *int {
 func (m *IntMachine) ensureMem(addr int) *int {
 	if addr >= len(m.mem) {
 		// realloc
-		newBuf := make([]int, allocSize(addr))
+		newBuf := make([]int, allocSize(addr+1))
 		copy(newBuf, m.mem)
 		m.mem = newBuf
 	}
