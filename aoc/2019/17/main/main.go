@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dragonsinth/learn/aoc/2019/intcode"
 	"github.com/dragonsinth/learn/aoc/termbox"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -59,6 +60,7 @@ y
 )
 
 func main() {
+	main1()
 	main2()
 }
 
@@ -117,9 +119,7 @@ func main1() {
 			}
 		}
 	}
-	for _, line := range p.data {
-		fmt.Println(string(line))
-	}
+	termbox.RenderPlain(p.data, os.Stdout)
 	fmt.Println(tot)
 
 	fmt.Println("bot: ", bot)
