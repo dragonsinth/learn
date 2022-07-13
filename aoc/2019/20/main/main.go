@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/dragonsinth/learn/aoc/termbox"
-	"os"
 	"strings"
 )
 
@@ -206,7 +204,6 @@ func run(input string) {
 		}
 	}
 
-	termbox.RenderPlain(data, os.Stdout)
 	distMap := computeDistMap(maze, edges["AA"].outer, portals, edges)
 	fmt.Println("2d:", distMap[edges["ZZ"].outer])
 	distMap3 := computeDistMap3(maze, edges["AA"].outer.z(0), portals, edges)
@@ -286,9 +283,6 @@ func computeDistMap3(maze map[pt]bool, start pt3, portals map[pt]string, edges m
 		if !ok {
 			panic("wat")
 		}
-		if dist > 9999 {
-			continue // probably no solution?
-		}
 
 		var checkPoints []pt3
 		for dir := N; dir < MAX_DIR; dir++ {
@@ -307,10 +301,12 @@ func computeDistMap3(maze map[pt]bool, start pt3, portals map[pt]string, edges m
 
 			e := edges[name]
 			if e.inner == w.flat() {
-				// traverse inner -> outer goes down a level
-				checkPoints = append(checkPoints, e.outer.z(w.Z+1))
+				// traverse inner -> outer goes down a level, unless we'd go deeper than the number of portals
+				if w.Z < len(edges) {
+					checkPoints = append(checkPoints, e.outer.z(w.Z+1))
+				}
 			} else if e.outer == w.flat() {
-				// traverse outer -> inner goes up a level unless at 0
+				// traverse outer -> inner goes up a level, unless at 0
 				if w.Z > 0 {
 					checkPoints = append(checkPoints, e.inner.z(w.Z-1))
 				}
