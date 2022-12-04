@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 )
 
@@ -128,12 +127,4 @@ func main1() {
 	}
 
 	fmt.Println(score)
-}
-
-func mustInt(s string) int {
-	if v, err := strconv.Atoi(s); err != nil {
-		panic(fmt.Sprint(s, err))
-	} else {
-		return v
-	}
 }
