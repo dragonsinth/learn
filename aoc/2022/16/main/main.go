@@ -32,12 +32,6 @@ func main() {
 	fmt.Println()
 	part2(parsePuzzle(sample), 1707)
 	fmt.Println()
-	//part1(parsePuzzle(data), 1737)
-	//fmt.Println()
-	//part2(parsePuzzle(data), 0)
-	// 2215 low
-	// 2260 high
-	// 2300 high
 }
 
 func parsePuzzle(input string) puzzle {
@@ -180,7 +174,9 @@ func (j *journey) playerFlip(loc *node) *journey {
 	r.nSwitches++
 	r.step = "player open " + loc.name
 	r.score += (r.maxTurns - r.turn - 1) * loc.flow
-
+	if r.score > r.maxScore {
+		panic("here")
+	}
 	if j.elephant == nil {
 		r.turn++
 	} else {
@@ -210,6 +206,9 @@ func (j *journey) elephantFlip(loc *node) *journey {
 	r.nSwitches++
 	r.step = "elephant open " + loc.name
 	r.score += (r.maxTurns - r.turn - 1) * loc.flow
+	if r.score > r.maxScore {
+		panic("here")
+	}
 	r.turn++
 	r.elephantTurn = false
 
@@ -277,7 +276,7 @@ type journeyKey struct {
 }
 
 func (p *puzzle) maxTheoretical(j *journey) int {
-	if j.nSwitches == p.nSwitches {
+	if j.nSwitches == p.nSwitches || j.turn == j.maxTurns {
 		return j.score
 	}
 
@@ -324,7 +323,7 @@ func (p *puzzle) maxTheoretical(j *journey) int {
 }
 
 func (p *puzzle) maxTheoreticalWithElephant(j *journey) int {
-	if j.nSwitches == p.nSwitches {
+	if j.nSwitches == p.nSwitches || j.turn == j.maxTurns {
 		return j.score
 	}
 
@@ -430,16 +429,31 @@ func (p *puzzle) bestToFlip(switches []bool, avoid *node) *node {
 	return best
 }
 
+func betterJourney(a *journey, b *journey) bool {
+	if a.maxScore != b.maxScore {
+		return a.maxScore > b.maxScore
+	}
+	if a.score != b.score {
+		return a.score > b.score
+	}
+	if a.turn != b.turn {
+		return a.turn > b.turn
+	}
+	return false
+}
+
 func (p *puzzle) computeBestJourney(j *journey) *journey {
 	seen := map[journeyKey]bool{}
-	work := sliceheap.New(func(a *journey, b *journey) bool {
-		return a.maxScore > b.maxScore
-	})
+	work := sliceheap.New(betterJourney)
 
 	push := func(j *journey) {
 		k := j.key()
 		if !seen[k] {
 			j.maxScore = p.maxTheoretical(j)
+			if j.maxScore < j.score {
+				fmt.Println(p.maxTheoretical(j))
+				panic("here")
+			}
 			if j.prev != nil && j.maxScore > j.prev.maxScore {
 				fmt.Println(p.maxTheoretical(j.prev))
 				fmt.Println(p.maxTheoretical(j))
@@ -480,16 +494,15 @@ func (p *puzzle) computeBestJourney(j *journey) *journey {
 
 func (p *puzzle) computeBestJourneyWithElephant(j *journey) *journey {
 	seen := map[journeyKey]bool{}
-	work := sliceheap.New(func(a *journey, b *journey) bool {
-		return a.maxScore > b.maxScore
-	})
+	work := sliceheap.New(betterJourney)
 
 	push := func(j *journey) {
 		k := j.key()
 		if !seen[k] {
 			j.maxScore = p.maxTheoreticalWithElephant(j)
-			if j.maxScore < 2000 {
-				return // prune
+			if j.maxScore < j.score {
+				fmt.Println(p.maxTheoreticalWithElephant(j))
+				panic("here")
 			}
 			if j.prev != nil && j.maxScore > j.prev.maxScore {
 				fmt.Println(p.maxTheoreticalWithElephant(j.prev))
@@ -504,15 +517,10 @@ func (p *puzzle) computeBestJourneyWithElephant(j *journey) *journey {
 	push(j)
 
 	trackMax := j.maxScore
-	var last *journey
-	for work.Len() > 0 {
+	for {
 		j := work.Pop()
 		if j.turn == j.maxTurns || j.nSwitches == p.nSwitches {
-			if last == nil || last.score < j.score {
-				fmt.Println("terminal: ", j.score)
-				last = j
-			}
-			continue
+			return j
 		}
 
 		if j.maxScore < trackMax {
@@ -547,7 +555,6 @@ func (p *puzzle) computeBestJourneyWithElephant(j *journey) *journey {
 			}
 		}
 	}
-	return last
 }
 
 type node struct {
