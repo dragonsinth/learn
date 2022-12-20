@@ -161,10 +161,6 @@ func (p *puzzle) renderPlane(z int) [][]byte {
 	return plane
 }
 
-func manhattan(a pos, b pos) int {
-	return abs(a.x-b.x) + abs(a.y-b.y)
-}
-
 func mustInt(s string) int {
 	if v, err := strconv.Atoi(s); err != nil {
 		panic(fmt.Sprint(s, err))
@@ -186,13 +182,5 @@ func max(a int, b int) int {
 		return a
 	} else {
 		return b
-	}
-}
-
-func abs(i int) int {
-	if i < 0 {
-		return -i
-	} else {
-		return i
 	}
 }
