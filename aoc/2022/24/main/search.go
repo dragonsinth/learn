@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/dragonsinth/learn/aoc/sliceheap"
-	"sync/atomic"
-	"time"
 )
 
 func findRoute(g *game) *game {
@@ -43,24 +41,15 @@ func findRoute(g *game) *game {
 }
 
 var (
-	stats  [4]int
-	pStats atomic.Pointer[[]int]
+	stats [4]int
 )
 
 func track(stat ...int) {
 	for i := 0; i < 4; i++ {
 		stats[i] = max(stats[i], stat[i])
 	}
-	cp := append([]int{}, stats[:]...)
-	pStats.Store(&cp)
 }
 
 func printStats() {
-	for {
-		if p := pStats.Load(); p != nil {
-			st := *p
-			fmt.Println(st[0], st[1], st[2], st[3])
-		}
-		time.Sleep(time.Second)
-	}
+	fmt.Println(stats[0], stats[1], stats[2], stats[3])
 }

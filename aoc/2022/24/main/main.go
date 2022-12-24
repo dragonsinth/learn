@@ -4,6 +4,7 @@ import (
 	"github.com/dragonsinth/learn/aoc/termbox"
 	"os"
 	"strings"
+	"time"
 )
 
 const sample = `
@@ -16,10 +17,10 @@ const sample = `
 `
 
 func main() {
-	run(sample)
+	run(sample, 0)
 }
 
-func run(input string) {
+func run(input string, frameDelay time.Duration) {
 	max := pos{-1, -1}
 	var bliz []blizzard
 	for _, line := range strings.Split(input, "\n") {
@@ -83,6 +84,22 @@ func run(input string) {
 	g.dest = end
 	g = findRoute(g)
 	termbox.RenderPlain(g.render(), os.Stdout)
+
+	printStats()
+
+	if frameDelay > 0 {
+		tb := termbox.New(true)
+		defer tb.Stop()
+		animate(g, tb, frameDelay)
+	}
+}
+
+func animate(g *game, tb termbox.Terminal, frameDelay time.Duration) {
+	if g.prev != nil {
+		animate(g.prev, tb, frameDelay)
+	}
+	tb.Render(g.render(), os.Stdout)
+	time.Sleep(frameDelay)
 }
 
 func manhattan(a pos, b pos) int {
