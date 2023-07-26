@@ -25,12 +25,6 @@ const (
 	input    = sample
 )
 
-//const (
-//	nWorkers = 5
-//	addTime  = 60
-//	input    = data
-//)
-
 var re = regexp.MustCompile(`^Step ([A-Z]) must be finished before step ([A-Z]) can begin.$`)
 
 type id string
