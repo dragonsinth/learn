@@ -109,10 +109,10 @@ func (p puzzle) descend(loc pos, cur int, dist map[pos]int) {
 	dist[loc] = cur
 
 	for _, dst := range []pos{
-		pos{loc.x, loc.y - 1},
-		pos{loc.x, loc.y + 1},
-		pos{loc.x + 1, loc.y},
-		pos{loc.x - 1, loc.y},
+		{loc.x, loc.y - 1},
+		{loc.x, loc.y + 1},
+		{loc.x + 1, loc.y},
+		{loc.x - 1, loc.y},
 	} {
 		if dst.x < 0 || dst.x >= p.w || dst.y < 0 || dst.y >= p.h {
 			continue
