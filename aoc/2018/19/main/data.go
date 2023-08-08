@@ -1,6 +1,9 @@
 package main
 
-import "golang.org/x/exp/slices"
+import (
+	"github.com/dragonsinth/learn/aoc/2018/asm"
+	"golang.org/x/exp/slices"
+)
 
 const data = `
 #ip 5
@@ -81,7 +84,7 @@ seti 0 0 5
 35 : pc = 0              ; GOTO 1
 */
 
-func translate(init int) regs {
+func translate(init int) asm.Registers {
 	var ax, bx, cx, dx, ex int
 	ax = init
 
@@ -107,7 +110,7 @@ _3:
 	ex = ex + 1
 
 	if ex > cx {
-		return regs{ax, bx, cx, dx, ex, 999}
+		return asm.Registers{ax, bx, cx, dx, ex, 999}
 	} else {
 		goto _2
 	}
