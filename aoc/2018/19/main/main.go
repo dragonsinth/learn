@@ -44,10 +44,19 @@ func main() {
 
 	decompile(data)
 
+	// 977, 10551377
 	reg := translate(0)
 	fmt.Println(reg)
-	//reg := translate(1)
+	//reg = translate(1)
 	//fmt.Println(reg)
+
+	for _, n := range []int{977, 10551377} {
+		pf := primeFactors(n)
+		fmt.Println(pf)
+		f := combine(pf)
+		fmt.Println(f)
+		fmt.Println(sum(f))
+	}
 }
 
 func decompile(input string) {

@@ -1,5 +1,7 @@
 package main
 
+import "golang.org/x/exp/slices"
+
 const data = `
 #ip 5
 addi 5 16 5
@@ -92,12 +94,6 @@ _2:
 _3:
 	dx = ex * bx
 
-	// scottb hack
-	if dx < cx {
-		bx = cx / ex
-		dx = bx * ex
-	}
-
 	if dx == cx {
 		ax = ex + ax
 	}
@@ -142,4 +138,44 @@ _17:
 	}
 
 	goto _1
+}
+
+func primeFactors(n int) []int {
+	var fac []int
+	for i := 2; i*i <= n; i++ {
+		for n%i == 0 {
+			fac = append(fac, i)
+			n = n / i
+		}
+	}
+	if n > 1 {
+		fac = append(fac, n)
+	}
+	return fac
+}
+
+func combine(fac []int) []int {
+	var ret []int
+
+	for i, c := 0, 1<<len(fac); i < c; i++ {
+		prod := 1
+		for j, v := range fac {
+			if i&(1<<j) != 0 {
+				prod *= v
+			}
+		}
+		ret = append(ret, prod)
+	}
+
+	slices.Sort(ret)
+	slices.Compact(ret)
+	return ret
+}
+
+func sum(in []int) int {
+	ret := 0
+	for _, n := range in {
+		ret += n
+	}
+	return ret
 }
