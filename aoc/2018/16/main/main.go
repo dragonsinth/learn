@@ -2,16 +2,21 @@ package main
 
 import (
 	"fmt"
+	"github.com/dragonsinth/learn/aoc/2018/asm"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-const sample = `
+const (
+	sample = `
 Before: [3, 2, 1, 1]
 9 2 1 2
 After:  [3, 2, 2, 1]
 `
+	data  = `` // puzzle input
+	data2 = `` // puzzle input
+)
 
 var (
 	re = []*regexp.Regexp{
@@ -21,11 +26,20 @@ var (
 	}
 )
 
-const prog = ""
-
 func main() {
+	// part 1
+	part1(sample)
+	possible := part1(data)
+
+	// part 2
+	codec := solve(possible)
+	fmt.Println(codec)
+	run(codec, data2)
+}
+
+func part1(in string) map[string]map[int]bool {
 	var lines []string
-	for _, line := range strings.Split(sample, "\n") {
+	for _, line := range strings.Split(in, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -36,7 +50,10 @@ func main() {
 		panic(len(lines))
 	}
 
-	impossible := [16][16]bool{}
+	possible := map[string]map[int]bool{}
+	for name := range asm.Instrs {
+		possible[name] = map[int]bool{}
+	}
 
 	sum := 0
 	for i := 0; i < len(lines); i += 3 {
@@ -48,12 +65,14 @@ func main() {
 		out := parseQuad(re[2], lines[i+2])
 
 		matches := 0
-		for i, inst := range instrs {
-			actual := inst.fn(code, in)
+		for name, fun := range asm.Instrs {
+			opCode := code[0]
+			var ops [3]int
+			copy(ops[:], code[1:])
+			actual := fun(ops, in)
 			if actual == out {
+				possible[name][opCode] = true
 				matches++
-			} else {
-				impossible[i][code[0]] = true
 			}
 		}
 		if matches >= 3 {
@@ -61,32 +80,58 @@ func main() {
 		}
 	}
 	fmt.Println(sum)
+	return possible
+}
 
-	for i, inst := range instrs {
-		if impossible[i][inst.code] {
-			panic(i)
-		}
+func solve(possible map[string]map[int]bool) [16]string {
+	var ret [16]string
+	for len(possible) > 0 {
+		// Find the one with only one possibility
+		func() {
+			for name, options := range possible {
+				if len(options) == 1 {
+					// match
+					for code := range options {
+						ret[code] = name
+						delete(possible, name)
+
+						// remove this option from every other code
+						for _, v := range possible {
+							delete(v, code)
+						}
+						return
+					}
+				}
+			}
+			panic("no possibilities")
+		}()
 	}
+	return ret
+}
 
-	// part 2
-	reg := [4]int{}
-	for _, line := range strings.Split(prog, "\n") {
+func run(codec [16]string, in string) {
+	var reg asm.Registers
+	for _, line := range strings.Split(in, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
 		code := parseQuad(re[1], line)
-		reg = instrs[code[0]].fn(code, reg)
+		opCode := code[0]
+		var ops [3]int
+		copy(ops[:], code[1:])
+		fun := asm.Instrs[codec[opCode]]
+		reg = fun(ops, reg)
 	}
 	fmt.Println(reg)
 }
 
-func parseQuad(r *regexp.Regexp, s string) [4]int {
+func parseQuad(r *regexp.Regexp, s string) asm.Registers {
 	if !r.MatchString(s) {
 		panic(s)
 	}
 	m := r.FindStringSubmatch(s)
-	return [4]int{
+	return asm.Registers{
 		mustInt(m[1]),
 		mustInt(m[2]),
 		mustInt(m[3]),
@@ -100,178 +145,4 @@ func mustInt(s string) int {
 	} else {
 		return v
 	}
-}
-
-type instr struct {
-	code int
-	name string
-	fn   func(code [4]int, reg [4]int) [4]int
-}
-
-var instrs = [16]instr{
-	{0, "eqri", eqri},
-	{1, "banr", banr},
-	{2, "bori", bori},
-	{3, "mulr", mulr},
-	{4, "seti", seti},
-	{5, "bani", bani},
-	{6, "muli", muli},
-	{7, "gtrr", gtrr},
-	{8, "setr", setr},
-	{9, "addi", addi},
-	{10, "gtir", gtir},
-	{11, "borr", borr},
-	{12, "addr", addr},
-	{13, "eqrr", eqrr},
-	{14, "gtri", gtri},
-	{15, "eqir", eqir},
-}
-
-func addr(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := reg[code[2]]
-	C := code[3]
-	out[C] = A + B
-	return out
-}
-
-func addi(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := code[2]
-	C := code[3]
-	out[C] = A + B
-	return out
-}
-
-func mulr(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := reg[code[2]]
-	C := code[3]
-	out[C] = A * B
-	return out
-}
-
-func muli(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := code[2]
-	C := code[3]
-	out[C] = A * B
-	return out
-}
-
-func banr(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := reg[code[2]]
-	C := code[3]
-	out[C] = A & B
-	return out
-}
-
-func bani(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := code[2]
-	C := code[3]
-	out[C] = A & B
-	return out
-}
-
-func borr(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := reg[code[2]]
-	C := code[3]
-	out[C] = A | B
-	return out
-}
-
-func bori(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := code[2]
-	C := code[3]
-	out[C] = A | B
-	return out
-}
-
-func setr(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	C := code[3]
-	out[C] = A
-	return out
-}
-
-func seti(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := code[1]
-	C := code[3]
-	out[C] = A
-	return out
-}
-
-func gtir(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := code[1]
-	B := reg[code[2]]
-	C := code[3]
-	out[C] = toInt(A > B)
-	return out
-}
-
-func gtri(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := code[2]
-	C := code[3]
-	out[C] = toInt(A > B)
-	return out
-}
-
-func gtrr(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := reg[code[2]]
-	C := code[3]
-	out[C] = toInt(A > B)
-	return out
-}
-
-func eqir(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := code[1]
-	B := reg[code[2]]
-	C := code[3]
-	out[C] = toInt(A == B)
-	return out
-}
-
-func eqri(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := code[2]
-	C := code[3]
-	out[C] = toInt(A == B)
-	return out
-}
-
-func eqrr(code [4]int, reg [4]int) [4]int {
-	out := reg
-	A := reg[code[1]]
-	B := reg[code[2]]
-	C := code[3]
-	out[C] = toInt(A == B)
-	return out
-}
-
-func toInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
 }
