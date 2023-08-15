@@ -5,49 +5,143 @@ import (
 	"fmt"
 	"github.com/dragonsinth/learn/aoc/grid"
 	"github.com/dragonsinth/learn/aoc/termbox"
+	"golang.org/x/exp/slices"
+	"math"
 	"os"
 )
 
-func collapseRegionsPlanar(dx, dy int, bots []bot) region {
-	iter := 1
-	regions := toRegions(bots)
+const (
+	XY = 0
+	Xy = 1
+)
 
-	for i := range regions {
-		r := &regions[i]
-		for d := range (pos{}) {
-			if d != dx && d != dy {
-				r.min[d] = 0
-				r.max[d] = 0
-			}
+type diamond struct {
+	r   [2]rng
+	ids []int
+}
+
+func (d diamond) area() int {
+	ret := 1
+	for _, r := range d.r {
+		ret *= r.max - r.min
+	}
+	return ret
+}
+
+func (d diamond) inRange(pos [2]int) bool {
+	x, y := pos[0], pos[1]
+	test := [2]int{
+		x + y,
+		x - y,
+	}
+
+	for i, v := range test {
+		if v < d.r[i].min || v > d.r[i].max {
+			return false
 		}
 	}
-	orig := regions
+	return true
+}
 
-	fmt.Printf("iter=%d, len=%d, vol=%d\n", iter, len(regions), volume(regions))
-	printPlanar(dx, dy, regions)
-	for len(regions) > 1 {
-		regions = intersectAll(regions)
-		regions = dedup(regions)
+func (d diamond) intersect(o diamond) (diamond, bool) {
+	var ret diamond
+	for dim := range d.r {
+		r := rng{
+			min: max(d.r[dim].min, o.r[dim].min),
+			max: min(d.r[dim].max, o.r[dim].max),
+		}
+		if r.max < r.min {
+			return diamond{}, false
+		}
+		ret.r[dim] = r
+	}
+	ret.ids = zipperMerge(d.ids, o.ids)
+	return ret, true
+}
+
+func (d diamond) key() [2]rng {
+	return d.r
+}
+
+func (d diamond) loc() [2]int {
+	// The center point of either pair of vertices should work.
+	vertices := d.vertices()
+	loc := [2]int{
+		mean(vertices[0][0], vertices[1][0]),
+		mean(vertices[0][1], vertices[1][1]),
+	}
+	chk := [2]int{
+		mean(vertices[2][0], vertices[3][0]),
+		mean(vertices[2][1], vertices[3][1]),
+	}
+
+	if loc != chk {
+		panic(fmt.Sprint("loc != chk", loc, chk))
+	}
+
+	return loc
+}
+
+func (d diamond) rads() [2]int {
+	var ret [2]int
+	for i := range ret {
+		ret[i] = rads(d.r[i].max, d.r[i].min)
+	}
+	return ret
+}
+
+func (d diamond) vertices() [4][2]int {
+	return [4][2]int{
+		intersectLines(d.r[XY].min, d.r[Xy].min), // left
+		intersectLines(d.r[XY].max, d.r[Xy].max), // right
+
+		intersectLines(d.r[XY].min, d.r[Xy].max), // bottom
+		intersectLines(d.r[XY].max, d.r[Xy].min), // top
+	}
+}
+
+func collapseRegionsPlanar(dx, dy int, bots []bot) diamond {
+	iter := 1
+	diamonds := toDiamonds(dx, dy, bots)
+	orig := diamonds
+
+	fmt.Printf("iter=%d, len=%d, area=%d\n", iter, len(diamonds), area(diamonds))
+	printPlanar(diamonds)
+	for len(diamonds) > 1 {
+		diamonds = intersectAllDiamonds(iter, diamonds)
+		diamonds = dedupDiamonds(diamonds)
 		iter++
-		fmt.Printf("iter=%d, len=%d, vol=%d\n", iter, len(regions), volume(regions))
-		printPlanar(dx, dy, regions)
+		fmt.Printf("iter=%d, len=%d, area=%d\n", iter, len(diamonds), area(diamonds))
+		printPlanar(diamonds)
 	}
 
 	// validate!
-	final := regions[0]
+	final := diamonds[0]
 	expectInRange := map[int]bool{}
 	for _, id := range final.ids {
 		expectInRange[id] = true
 	}
 
-	for y := final.min[dy]; y <= final.max[dy]; y++ {
-		for x := final.min[dx]; x <= final.max[dx]; x++ {
+	// find the rect circumscribing the diamond
+	xmin, xmax := math.MaxInt, math.MinInt
+	ymin, ymax := math.MaxInt, math.MinInt
+	for _, v := range final.vertices() {
+		xmin = min(xmin, v[0])
+		xmax = max(xmax, v[0])
+		ymin = min(ymin, v[1])
+		ymax = max(ymax, v[1])
+	}
+
+	for y := ymin; y <= ymax; y++ {
+		for x := xmin; x <= xmax; x++ {
+			pt := [2]int{x, y}
+			if !final.inRange(pt) {
+				continue
+			}
+
 			for id, r := range orig {
-				p := r.min
-				p[dx] = x
-				p[dy] = y
-				if expectInRange[id] != r.inRange(p) {
-					panic(fmt.Sprintf("expectInRange(%v) != r.inRange(%v), id=%d", expectInRange[id], r.inRange(p), id))
+				if expectInRange[id] != r.inRange(pt) {
+					panic(fmt.Sprintf("expectInRange(%v) != r.inRange(%v), id=%d", expectInRange[id], r.inRange(pt), id))
 				}
 			}
 		}
@@ -56,25 +150,147 @@ func collapseRegionsPlanar(dx, dy int, bots []bot) region {
 	return final
 }
 
-func printPlanar(dx, dy int, regions []region) {
-	draw := grid.Alloc2d(30, 30, byte('.'))
-	for _, r := range regions {
-		if r.volume() > 100 {
+func intersectAllDiamonds(minLen int, dias []diamond) []diamond {
+	var ret []diamond
+	for i, dia := range dias {
+		found := false
+		for j := i + 1; j < len(dias); j++ {
+			if newDia, ok := dia.intersect(dias[j]); ok {
+				if len(newDia.ids) >= minLen {
+					ret = append(ret, newDia)
+					found = true
+				}
+			}
+		}
+		if !found && len(dia.ids) >= minLen {
+			ret = append(ret, dia)
+		}
+	}
+	return ret
+}
+
+func dedupDiamonds(dias []diamond) []diamond {
+	slices.SortFunc(dias, func(a, b diamond) bool {
+		for i := range a.r {
+			if a.r[i].min != b.r[i].min {
+				return a.r[i].min < b.r[i].min
+			}
+			if a.r[i].max != b.r[i].max {
+				return a.r[i].max < b.r[i].max
+			}
+		}
+		return false
+	})
+
+	wIdx := 1
+	last := &dias[0]
+	for i := 1; i < len(dias); i++ {
+		if dias[i].key() == last.key() {
+			last.ids = zipperMerge(last.ids, dias[i].ids)
+		} else {
+			dias[wIdx] = dias[i]
+			last = &dias[wIdx]
+			wIdx++
+		}
+	}
+	return dias[:wIdx]
+}
+
+func toDiamonds(dx int, dy int, bots []bot) []diamond {
+	var ret []diamond
+	for i, b := range bots {
+		x := b.p[dx]
+		y := b.p[dy]
+		r := b.rad
+
+		// quadruple the coordinate system for precise math
+		x *= 4
+		y *= 4
+		r *= 4
+
+		dia := diamond{
+			r: [2]rng{
+				XY: {
+					min: x + y - r,
+					max: x + y + r,
+				},
+				Xy: {
+					min: x - y - r,
+					max: x - y + r,
+				}},
+			ids: []int{i},
+		}
+		if dia.loc() != [2]int{x, y} {
+			panic("wrong loc")
+		}
+		ret = append(ret, dia)
+	}
+	return ret
+}
+
+func printPlanar(dias []diamond) {
+	draw := grid.Alloc2d(60, 60, byte(0))
+	for _, dia := range dias {
+		if dia.area() > 100 {
 			continue
 		}
+		l := byte(len(dia.ids))
 
-		for y := max(0, r.min[dy]); y <= min(29, r.max[dy]); y++ {
-			for x := max(0, r.min[dx]); x <= min(29, r.max[dx]); x++ {
-				draw[y][x] = '*'
+		// find the rect circumscribing the diamond
+		xmin, xmax := math.MaxInt, math.MinInt
+		ymin, ymax := math.MaxInt, math.MinInt
+		for _, v := range dia.vertices() {
+			xmin = min(xmin, v[0])
+			xmax = max(xmax, v[0])
+			ymin = min(ymin, v[1])
+			ymax = max(ymax, v[1])
+		}
+
+		for y := ymin; y <= ymax; y++ {
+			for x := xmin; x <= xmax; x++ {
+				if !dia.inRange([2]int{x, y}) {
+					continue
+				}
+
+				if draw[y/2][x/2] < l {
+					draw[y/2][x/2] = l
+				}
 			}
 		}
 	}
+
+	for y := range draw {
+		for x := range draw[0] {
+			draw[y][x] = ".:;|oO*"[draw[y][x]]
+		}
+	}
+
 	termbox.RenderPlain(draw, os.Stdout)
 
-	for _, r := range regions {
+	for _, dia := range dias {
 		var buf bytes.Buffer
-		buf.WriteString(fmt.Sprintf(" [%d,%d->%d,%d]", r.min[dx], r.min[dy], r.max[dx], r.max[dx]))
-		buf.WriteString(fmt.Sprintf(" %+v", r.ids))
+		buf.WriteString(fmt.Sprintf(" loc=%+v, rads=%+v", dia.loc(), dia.rads()))
+		buf.WriteString(fmt.Sprintf(" %+v", dia.ids))
 		fmt.Println(buf.String())
 	}
+}
+
+func area(dias []diamond) int {
+	sum := 0
+	for _, dia := range dias {
+		sum += dia.area()
+	}
+	return sum
+}
+
+func intersectLines(xpy, xny int) [2]int {
+	x := mean(xpy, xny)
+	y := rads(xpy, xny)
+	if x+y != xpy {
+		panic(xpy)
+	}
+	if x-y != xny {
+		panic(xny)
+	}
+	return [2]int{x, y}
 }

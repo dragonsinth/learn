@@ -39,20 +39,29 @@ var (
 type pos = [dims]int
 
 func main() {
-	// fmt.Println(findPointsInBest(parse(sample)))
+	if false {
+		fmt.Println(findPointsInBest(parse(sample)))
+	}
 
 	s2 := parse(sample2)
-	fmt.Println("collapse X")
-	collapseRegionsLinear(0, s2)
-	fmt.Println("collapse Y")
-	collapseRegionsLinear(1, s2)
-	fmt.Println("collapse Z")
-	collapseRegionsLinear(2, s2)
 
-	fmt.Println("collapse X/Y")
-	collapseRegionsPlanar(0, 1, s2)
-	collapseRegionsPlanar(1, 2, s2)
-	collapseRegionsPlanar(2, 0, s2)
+	if false {
+		fmt.Println("collapse X")
+		collapseRegionsLinear(0, s2)
+		fmt.Println("collapse Y")
+		collapseRegionsLinear(1, s2)
+		fmt.Println("collapse Z")
+		collapseRegionsLinear(2, s2)
+	}
+
+	if false {
+		fmt.Println("collapse X/Y")
+		collapseRegionsPlanar(0, 1, s2)
+		fmt.Println("collapse Y/Z")
+		collapseRegionsPlanar(1, 2, s2)
+		fmt.Println("collapse Z/X")
+		collapseRegionsPlanar(2, 0, s2)
+	}
 
 	collapseRegionsCubic(s2)
 
@@ -79,20 +88,10 @@ func parse(input string) []bot {
 				mustInt(m[2]),
 				mustInt(m[3]),
 			},
-			r: mustInt(m[4]),
+			rad: mustInt(m[4]),
 		})
 	}
 	return bots
-}
-
-func toRegions(bots []bot) []region {
-	var ret []region
-	for i, bot := range bots {
-		r := bot.toRegion()
-		r.ids = []int{i}
-		ret = append(ret, r)
-	}
-	return ret
 }
 
 func mustInt(s string) int {
@@ -122,4 +121,18 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func mean(a, b int) int {
+	if (a+b)%2 != 0 {
+		panic(a + b)
+	}
+	return (a + b) / 2
+}
+
+func rads(a, b int) int {
+	if (a-b)%2 != 0 {
+		panic(a - b)
+	}
+	return (a - b) / 2
 }

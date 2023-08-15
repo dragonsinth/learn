@@ -1,31 +1,22 @@
 package main
 
 type bot struct {
-	p pos
-	r int
-}
-
-func (b bot) toRegion() region {
-	var ret region
-	for i, v := range b.p {
-		ret.min[i] = v - b.r
-		ret.max[i] = v + b.r
-	}
-	return ret
+	p   pos
+	rad int
 }
 
 func findPointsInBest(bots []bot) int {
 	best, bestR := 0, 0
 	for i, b := range bots {
-		if b.r > bestR {
-			best, bestR = i, b.r
+		if b.rad > bestR {
+			best, bestR = i, b.rad
 		}
 	}
 
 	bestBot := bots[best]
 	sum := 0
 	for _, b := range bots {
-		if dist(bestBot.p, b.p) <= bestBot.r {
+		if dist(bestBot.p, b.p) <= bestBot.rad {
 			sum++
 		}
 	}
