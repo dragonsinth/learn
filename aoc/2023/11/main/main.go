@@ -117,37 +117,35 @@ func (p puz) Embiggen(fac int) puz {
 		h:   p.h,
 	}
 
-	// expand rows
+	// map rows
 	dx := 0
-	out := map[pos]wat{}
+	rowMap := make([]int, r.w)
 	for x := 0; x < r.w; x++ {
+		rowMap[x] = dx
 		found := false
 		for y := 0; y < r.h; y++ {
-			w := r.at(pos{x, y})
-			if w == G {
-				out[pos{dx, y}] = G
+			if r.at(pos{x, y}) == G {
 				found = true
+				break
 			}
 		}
 		if found {
 			dx++
 		} else {
 			dx += fac
-
 		}
 	}
-	r.pts, r.w = out, dx
 
-	// expand cols
-	out = map[pos]wat{}
+	// map cols
 	dy := 0
+	colMap := make([]int, r.h)
 	for y := 0; y < r.h; y++ {
+		colMap[y] = dy
 		found := false
 		for x := 0; x < r.w; x++ {
-			w := r.at(pos{x, y})
-			if w == G {
-				out[pos{x, dy}] = G
+			if r.at(pos{x, y}) == G {
 				found = true
+				break
 			}
 		}
 		if found {
@@ -156,7 +154,16 @@ func (p puz) Embiggen(fac int) puz {
 			dy += fac
 		}
 	}
-	r.pts, r.h = out, dy
+
+	// map points
+	out := make(map[pos]wat, len(r.pts))
+	for k, v := range r.pts {
+		k.x = rowMap[k.x]
+		k.y = colMap[k.y]
+		out[k] = v
+	}
+
+	r.pts, r.w, r.h = out, dx, dy
 	return r
 }
 
