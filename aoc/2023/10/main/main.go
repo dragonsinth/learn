@@ -71,8 +71,8 @@ func main() {
 	}
 }
 
-func run(sample string, debug bool) {
-	p, start := parse(sample)
+func run(input string, debug bool) {
+	p, start := parse(input)
 	p.resolveStart(start)
 	if debug {
 		fmt.Println("start")

@@ -30,8 +30,8 @@ func main() {
 	run(sample, 1, true)
 }
 
-func run(sample string, expectDiffs int, debug bool) {
-	ps := parse(sample)
+func run(input string, expectDiffs int, debug bool) {
+	ps := parse(input)
 	sum := 0
 	for i, p := range ps {
 		if debug {
@@ -169,19 +169,7 @@ type pos struct {
 	x, y int
 }
 
-func (p pos) dist(o pos) int {
-	return abs(p.x-o.x) + abs(p.y-o.y)
-}
-
 type wat byte
-
-func abs(i int) int {
-	if i < 0 {
-		return -i
-	} else {
-		return i
-	}
-}
 
 func min(a int, b int) int {
 	if a < b {

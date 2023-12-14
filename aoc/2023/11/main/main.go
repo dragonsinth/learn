@@ -27,8 +27,8 @@ func main() {
 	run(sample, 100, false)
 }
 
-func run(sample string, fac int, debug bool) {
-	p := parse(sample)
+func run(input string, fac int, debug bool) {
+	p := parse(input)
 	if debug {
 		fmt.Println("start")
 		termbox.RenderPlain(p.Render(), os.Stdout)
