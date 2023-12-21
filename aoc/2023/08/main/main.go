@@ -3,161 +3,179 @@ package main
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
-var sample = `
-px{a<2006:qkq,m>2090:A,rfg}
-pv{a>1716:R,A}
-lnx{m>1548:A,A}
-rfg{s<537:gd,x>2440:R,A}
-qs{s>3448:A,lnx}
-qkq{x<1416:A,crn}
-crn{x>2662:A,R}
-in{s<1351:px,qqz}
-qqz{s>2770:qs,m<1801:hdj,R}
-gd{a>3333:R,R}
-hdj{m>838:A,pv}
+var sample1 = `
+RL
 
-{x=787,m=2655,a=1222,s=2876}
-{x=1679,m=44,a=2067,s=496}
-{x=2036,m=264,a=79,s=2244}
-{x=2461,m=1339,a=466,s=291}
-{x=2127,m=1623,a=2188,s=1013}`
+AAA = (BBB, CCC)
+BBB = (DDD, EEE)
+CCC = (ZZZ, GGG)
+DDD = (DDD, DDD)
+EEE = (EEE, EEE)
+GGG = (GGG, GGG)
+ZZZ = (ZZZ, ZZZ)
+`
 
-var reRule = regexp.MustCompile(`^([a-z]+){((?:(?:[xmas][<>]\d+:[a-zAR]+),|[AR],)+)([a-zAR]+)}$`)
-var rePart = regexp.MustCompile(`^{x=(\d+),m=(\d+),a=(\d+),s=(\d+)}$`)
+var sample2 = `
+LLR
+
+AAA = (BBB, BBB)
+BBB = (AAA, ZZZ)
+ZZZ = (ZZZ, ZZZ)
+`
+
+var sample3 = `
+LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)
+`
+
+var re1 = regexp.MustCompile(`^[RL]+$`)
+var re2 = regexp.MustCompile(`^([A-Z0-9]{3}) = \(([A-Z0-9]{3}), ([A-Z0-9]{3})\)$`)
 
 func main() {
-	p, parts := parse(sample)
-	p.part1(parts)
-	p.part2()
+	part1(parse(sample1))
+	part1(parse(sample2))
+	part2(parse(sample3))
 }
 
-func parse(input string) (puz, []part) {
-	p := puz{
-		rules: map[target]rule{},
-	}
-	var parts []part
-	state := 0
+func parse(input string) ([]byte, map[string]*node) {
+	nodes := map[string]*node{}
+
+	var path []byte
 	for _, line := range strings.Split(input, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
-			if len(p.rules) > 0 {
-				state = 1
-			}
 			continue
 		}
 
-		if state == 0 {
-			if !reRule.MatchString(line) {
+		if path == nil {
+			if !re1.MatchString(line) {
 				panic(line)
 			}
-			matches := reRule.FindStringSubmatch(line)
-			t := parseTarget(matches[1])
-			p.rules[t] = rule{
-				name:  t,
-				steps: parseSteps(matches[2]),
-				def:   parseTarget(matches[3]),
-			}
+			path = []byte(line)
 		} else {
-			if !rePart.MatchString(line) {
+			if !re2.MatchString(line) {
 				panic(line)
 			}
-			matches := rePart.FindStringSubmatch(line)
-			parts = append(parts, part{
-				X: mustInt(matches[1]),
-				M: mustInt(matches[2]),
-				A: mustInt(matches[3]),
-				S: mustInt(matches[4]),
-			})
+			matches := re2.FindStringSubmatch(line)
+			src, lf, rt := matches[1], matches[2], matches[3]
+			nodes[src] = &node{
+				src:   src,
+				lf:    lf,
+				rt:    rt,
+				left:  nil,
+				right: nil,
+			}
 		}
 	}
-	return p, parts
-}
 
-var reStep = regexp.MustCompile(`^([xmas])([<>])(\d+):([a-zAR]+)$`)
-
-func parseSteps(in string) []step {
-	var steps []step
-	for _, p := range strings.Split(in, ",") {
-		if p == "" {
-			continue
+	for _, v := range nodes {
+		v.left = nodes[v.lf]
+		if v.left == nil {
+			panic(v.lf)
 		}
-		if !reStep.MatchString(p) {
-			panic(p)
+		v.right = nodes[v.rt]
+		if v.right == nil {
+			panic(v.right)
 		}
-		matches := reStep.FindStringSubmatch(p)
-		steps = append(steps, step{
-			q:   parseQuality(matches[1][0]),
-			sym: parseSym(matches[2][0]),
-			val: mustInt(matches[3]),
-			t:   parseTarget(matches[4]),
-		})
 	}
-	return steps
+
+	return path, nodes
 }
 
-func parseQuality(s byte) quality {
-	switch s {
-	case 'x':
-		return X
-	case 'm':
-		return M
-	case 'a':
-		return A
-	case 's':
-		return S
+type node struct {
+	src, lf, rt string
+	left, right *node
+}
+
+func (cur *node) next(wat byte) *node {
+	switch wat {
+	case 'L':
+		return cur.left
+	case 'R':
+		return cur.right
 	default:
-		panic(s)
+		panic(wat)
 	}
 }
 
-func parseSym(s byte) sym {
-	if s != '<' && s != '>' {
-		panic(s)
+func part1(path []byte, nodes map[string]*node) {
+	cur := nodes["AAA"]
+	step := 0
+	for cur.src != "ZZZ" {
+		pos := step % len(path)
+		cur = cur.next(path[pos])
+		step++
 	}
-	return sym(s)
+	fmt.Println(step)
 }
 
-func parseTarget(s string) target {
-	return target(s)
+type state struct {
+	src string
+	pos int
 }
 
-type puz struct {
-	rules map[target]rule
-}
-type rule struct {
-	name  target
-	steps []step
-	def   target
-}
+func part2(path []byte, nodes map[string]*node) {
+	var factors []int
+	for _, v := range nodes {
+		if v.src[2] == 'A' {
+			// Compute a chain that loops.
+			cur := v
+			seen := map[state]int{}
+			step := 0
+			zpos := 0
+			for {
+				if cur.src[2] == 'Z' {
+					zpos = step
+				}
 
-type step struct {
-	q   quality
-	sym sym
-	val int
-	t   target
-}
-
-type sym byte
-
-type target string
-
-type quality byte
-
-const (
-	X = quality(iota)
-	M
-	A
-	S
-)
-
-func mustInt(s string) int {
-	if v, err := strconv.Atoi(s); err != nil {
-		panic(fmt.Sprint(s, err))
-	} else {
-		return v
+				pos := step % len(path)
+				st := state{
+					src: cur.src,
+					pos: pos,
+				}
+				if last, ok := seen[st]; ok {
+					fmt.Printf("src=%s, pos=%s, seen=%d, repeat=%d, zpos=%d\n", v.src, st.src, last, step, zpos)
+					if zpos != step-last {
+						panic(zpos)
+					}
+					factors = append(factors, zpos)
+					break
+				}
+				seen[st] = step
+				cur = cur.next(path[pos])
+				step++
+			}
+		}
 	}
+
+	fmt.Println(factors)
+	m := 1
+	for _, v := range factors {
+		m = lcm(m, v)
+	}
+	fmt.Println(m)
+}
+
+func gcd(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+	return a
+}
+
+func lcm(a, b int) int {
+	return a * (b / gcd(a, b))
 }
