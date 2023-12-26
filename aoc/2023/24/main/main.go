@@ -20,7 +20,7 @@ var re = regexp.MustCompile(`^(\d+),\s*(\d+),\s*(\d+)\s*@\s*(-?\d+),\s*(-?\d+),\
 
 func main() {
 	part1(sample, 7, 27, true)
-	//part1(data, 200000000000000, 400000000000000, false)
+	part2(sample, -10, 10, true)
 }
 
 func part1(input string, min int, max int, debug bool) {
@@ -72,15 +72,15 @@ func parse(input string) puz {
 		}
 		matches := re.FindStringSubmatch(line)
 		p.vecs = append(p.vecs, vec{
-			p: [3]int{
-				mustInt(matches[1]),
-				mustInt(matches[2]),
-				mustInt(matches[3]),
+			p: [3]float64{
+				float64(mustInt(matches[1])),
+				float64(mustInt(matches[2])),
+				float64(mustInt(matches[3])),
 			},
-			v: [3]int{
-				mustInt(matches[4]),
-				mustInt(matches[5]),
-				mustInt(matches[6]),
+			v: [3]float64{
+				float64(mustInt(matches[4])),
+				float64(mustInt(matches[5])),
+				float64(mustInt(matches[6])),
 			},
 		})
 	}
@@ -104,25 +104,35 @@ const (
 )
 
 type vec struct {
-	p [3]int
-	v [3]int
+	p [3]float64
+	v [3]float64
 }
 
 func (v vec) String() any {
-	return fmt.Sprintf("%d, %d, %d @ %d, %d, %d", v.p[X], v.p[Y], v.p[Z], v.v[X], v.v[Y], v.v[Z])
+	return fmt.Sprintf("%f, %f, %f @ %f, %f, %f", v.p[X], v.p[Y], v.p[Z], v.v[X], v.v[Y], v.v[Z])
 }
 
 func intersectFloat2d(v1 vec, v2 vec, d1 dim, d2 dim, debug bool) (float64, float64, bool) {
-	a, b, x, y := float64(v1.p[d1]), float64(v1.p[d2]), float64(v1.v[d1]), float64(v1.v[d2])
-	c, d, t, u := float64(v2.p[d1]), float64(v2.p[d2]), float64(v2.v[d1]), float64(v2.v[d2])
+	a, b, x, y := v1.p[d1], v1.p[d2], v1.v[d1], v1.v[d2]
+	c, d, t, u := v2.p[d1], v2.p[d2], v2.v[d1], v2.v[d2]
 
-	dt := (u*c - u*a + t*b - t*d) / (u*x - t*y)
-	if math.IsNaN(dt) {
+	num := u*c - u*a + t*b - t*d
+	den := u*x - t*y
+	if eq(den, 0) {
+		m1, c1 := slopeIntercept(v1, d1, d2)
+		m2, c2 := slopeIntercept(v2, d1, d2)
+		if eq(m1, m2) && eq(c1, c2) {
+			if debug {
+				fmt.Println("convergence")
+			}
+			return math.NaN(), math.NaN(), true
+		}
 		if debug {
-			fmt.Println("no intersection")
+			fmt.Println("no convergence")
 		}
 		return 0, 0, false
 	}
+	dt := num / den
 	if dt < 0 {
 		if debug {
 			fmt.Println("past intersection")
@@ -130,6 +140,22 @@ func intersectFloat2d(v1 vec, v2 vec, d1 dim, d2 dim, debug bool) (float64, floa
 		return 0, 0, false
 	}
 	return a + x*dt, b + y*dt, true
+}
+
+func slopeIntercept(v1 vec, d1 dim, d2 dim) (float64, float64) {
+	a, b, dx, dy := v1.p[d1], v1.p[d2], v1.v[d1], v1.v[d2]
+
+	if dx == 0 {
+		// just do it the other way
+		a, b, dx, dy = b, a, dy, dx
+	}
+
+	slope := dy / dx
+	if math.IsNaN(slope) {
+		fmt.Println("NaN")
+	}
+	intercept := b - slope*a
+	return slope, intercept
 }
 
 func mustInt(s string) int {
