@@ -1,38 +1,47 @@
 package main
 
-func zipperMerge(a []int, b []int) []int {
-	r := make([]int, len(a)+len(b))
-	ai, bi, ri := 0, 0, 0
-	for ai < len(a) && bi < len(b) {
-		av := a[ai]
-		bv := b[bi]
-		switch {
-		case av < bv:
-			r[ri] = av
-			ri++
-			ai++
-		case bv < av:
-			r[ri] = bv
-			ri++
-			bi++
-		case av == bv:
-			r[ri] = av
-			ri++
-			ai++
-			bi++
-		default:
-			panic(av)
+import (
+	"math/rand"
+)
+
+func calcScore(p pos, bots []bot) int {
+	ret := 0
+	for _, b := range bots {
+		if b.inRange(p) {
+			ret++
 		}
 	}
-	for ai < len(a) {
-		r[ri] = a[ai]
-		ri++
-		ai++
+	return ret
+}
+
+func randomMatch(search pos, rad pos, iter int, bots []bot) (int, pos) {
+	bestScore, bestPos := calcScore(search, bots), search
+	for i := 0; i < iter; i++ {
+		var p pos
+		for d := X; d <= Z; d++ {
+			r := rad[d]
+			p[d] = search[d] + rand.Intn(r*2+1) - r
+		}
+		score := calcScore(p, bots)
+		if score > bestScore || (score == bestScore && p.rad() < bestPos.rad()) {
+			bestScore, bestPos = score, p
+		}
 	}
-	for bi < len(b) {
-		r[ri] = b[bi]
-		ri++
-		bi++
+	return bestScore, bestPos
+}
+
+func exhaustiveMatch(search pos, rad int, bots []bot) (int, pos) {
+	bestScore, bestPos := calcScore(search, bots), search
+	for x := search[X] - rad; x <= search[X]+rad; x++ {
+		for y := search[Y] - rad; y <= search[Y]+rad; y++ {
+			for z := search[Z] - rad; z <= search[Z]+rad; z++ {
+				p := pos{x, y, z}
+				score := calcScore(p, bots)
+				if score > bestScore || (score == bestScore && p.rad() < bestPos.rad()) {
+					bestScore, bestPos = score, p
+				}
+			}
+		}
 	}
-	return r[:ri]
+	return bestScore, bestPos
 }

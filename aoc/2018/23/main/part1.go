@@ -3,6 +3,21 @@ package main
 type bot struct {
 	p   pos
 	rad int
+
+	min pos
+	max pos
+}
+
+func (b bot) inRange(p pos) bool {
+	return dist(b.p, p) <= b.rad
+}
+
+func (b bot) normalize() bot {
+	for d := range b.p {
+		b.min[d] = b.p[d] - b.rad
+		b.max[d] = b.p[d] + b.rad
+	}
+	return b
 }
 
 func findPointsInBest(bots []bot) int {
@@ -16,7 +31,7 @@ func findPointsInBest(bots []bot) int {
 	bestBot := bots[best]
 	sum := 0
 	for _, b := range bots {
-		if dist(bestBot.p, b.p) <= bestBot.rad {
+		if bestBot.inRange(b.p) {
 			sum++
 		}
 	}

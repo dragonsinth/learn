@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const sample = `
@@ -28,45 +30,52 @@ pos=<50,50,50>, r=200
 pos=<10,10,10>, r=5
 `
 
+type dim int
+
 const (
-	dims = 3
+	X = dim(iota)
+	Y
+	Z
 )
 
 var (
 	re = regexp.MustCompile(`^pos=<(-?\d+),(-?\d+),(-?\d+)>, r=(\d+)$`)
 )
 
-type pos = [dims]int
+type pos [3]int
+
+func (p pos) rad() int {
+	return p[X] + p[Y] + p[Z]
+}
+
+func (p pos) String() string {
+	return fmt.Sprintf("pos{%d, %d, %d}", p[X], p[Y], p[Z])
+}
 
 func main() {
-	if false {
-		fmt.Println(findPointsInBest(parse(sample)))
+	fmt.Println(findPointsInBest(parse(sample)))
+
+	rand.Seed(time.Now().UnixMicro())
+	bots := parse(sample2)
+	search := pos{10, 10, 10}
+	bestScore := calcScore(search, bots)
+	fmt.Println(bestScore, search.rad(), search)
+
+	for {
+		score, match := randomMatch(search, pos{0, 2000, 2000}, 100000, bots)
+		fmt.Println(score, match.rad(), match)
+		if score > bestScore || (score == bestScore && match.rad() < search.rad()) {
+			search = match
+			bestScore = score
+		}
+
+		score, match = exhaustiveMatch(search, 25, bots)
+		fmt.Println(score, match.rad(), match)
+		if score > bestScore || (score == bestScore && match.rad() < search.rad()) {
+			search = match
+			bestScore = score
+		}
 	}
-
-	s2 := parse(sample2)
-
-	if false {
-		fmt.Println("collapse X")
-		collapseRegionsLinear(0, s2)
-		fmt.Println("collapse Y")
-		collapseRegionsLinear(1, s2)
-		fmt.Println("collapse Z")
-		collapseRegionsLinear(2, s2)
-	}
-
-	if false {
-		fmt.Println("collapse X/Y")
-		collapseRegionsPlanar(0, 1, s2)
-		fmt.Println("collapse Y/Z")
-		collapseRegionsPlanar(1, 2, s2)
-		fmt.Println("collapse Z/X")
-		collapseRegionsPlanar(2, 0, s2)
-	}
-
-	collapseRegionsCubic(s2)
-
-	//closest = findClosest(parse(data))
-	//fmt.Println(closest, dist(pos{}, closest))
 }
 
 func parse(input string) []bot {
@@ -89,7 +98,7 @@ func parse(input string) []bot {
 				mustInt(m[3]),
 			},
 			rad: mustInt(m[4]),
-		})
+		}.normalize())
 	}
 	return bots
 }
