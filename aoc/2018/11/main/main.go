@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 )
 
 func main() {
@@ -58,25 +57,4 @@ func power(x int, y int, serial int) int {
 	p = (p / 100) % 10
 	p = p - 5
 	return p
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-func mustInt(s string) int {
-	if v, err := strconv.Atoi(s); err != nil {
-		panic(fmt.Sprint(s, err))
-	} else {
-		return v
-	}
 }

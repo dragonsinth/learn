@@ -170,11 +170,3 @@ type pos struct {
 }
 
 type wat byte
-
-func min(a int, b int) int {
-	if a < b {
-		return a
-	} else {
-		return b
-	}
-}

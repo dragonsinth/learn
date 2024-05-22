@@ -260,22 +260,6 @@ var dirMap = map[byte]dir{
 	'U': U,
 }
 
-func max(a int, b int) int {
-	if a > b {
-		return a
-	} else {
-		return b
-	}
-}
-
-func min(a int, b int) int {
-	if a < b {
-		return a
-	} else {
-		return b
-	}
-}
-
 func mustInt(s string) int {
 	if v, err := strconv.Atoi(s); err != nil {
 		panic(fmt.Sprint(s, err))

@@ -57,13 +57,6 @@ func main() {
 	fmt.Println(sum, powSum)
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func mustInt(s string) int {
 	if v, err := strconv.Atoi(s); err != nil {
 		panic(fmt.Sprint(s, err))

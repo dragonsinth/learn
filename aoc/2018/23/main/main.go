@@ -117,31 +117,3 @@ func abs(i int) int {
 	}
 	return i
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func mean(a, b int) int {
-	if (a+b)%2 != 0 {
-		panic(a + b)
-	}
-	return (a + b) / 2
-}
-
-func rads(a, b int) int {
-	if (a-b)%2 != 0 {
-		panic(a - b)
-	}
-	return (a - b) / 2
-}

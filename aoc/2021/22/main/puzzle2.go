@@ -181,20 +181,6 @@ func intersect(a cube, b cube) (cube, intersection) {
 	return cube{}, NONE
 }
 
-func max(p1 int, p2 int) int {
-	if p1 > p2 {
-		return p1
-	}
-	return p2
-}
-
-func min(p1 int, p2 int) int {
-	if p1 < p2 {
-		return p1
-	}
-	return p2
-}
-
 func orderRange(p1 int, p2 int) (int, int) {
 	if p1 > p2 {
 		return p2, p1

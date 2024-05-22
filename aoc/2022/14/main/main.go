@@ -213,19 +213,3 @@ func mustInt(s string) int {
 		return v
 	}
 }
-
-func min(a int, b int) int {
-	if a < b {
-		return a
-	} else {
-		return b
-	}
-}
-
-func max(a int, b int) int {
-	if a > b {
-		return a
-	} else {
-		return b
-	}
-}

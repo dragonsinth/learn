@@ -143,20 +143,6 @@ func (p *puz) Compute() {
 	}
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func (p *puz) Render() [][]byte {
 	var data [][]byte
 	for y := p.ymin; y <= p.ymax; y++ {

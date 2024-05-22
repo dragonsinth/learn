@@ -1,6 +1,6 @@
 module github.com/dragonsinth/learn/aoc
 
-go 1.18
+go 1.21
 
 require (
 	github.com/nsf/termbox-go v1.1.1

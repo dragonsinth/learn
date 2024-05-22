@@ -572,14 +572,6 @@ type puzzle struct {
 	nSwitches   int
 }
 
-func max(a, b int) int {
-	if a < b {
-		return b
-	} else {
-		return a
-	}
-}
-
 func mustInt(s string) int {
 	if v, err := strconv.Atoi(s); err != nil {
 		panic(fmt.Sprint(s, err))

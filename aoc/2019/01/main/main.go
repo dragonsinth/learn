@@ -23,7 +23,7 @@ func main() {
 		}
 		n := mustInt(line)
 		for {
-			n = (n/3 - 2)
+			n = n/3 - 2
 			if n > 0 {
 				sum += n
 			} else {

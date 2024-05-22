@@ -106,14 +106,6 @@ func manhattan(a pos, b pos) int {
 	return abs(a.x-b.x) + abs(a.y-b.y)
 }
 
-func max(a int, b int) int {
-	if a > b {
-		return a
-	} else {
-		return b
-	}
-}
-
 func abs(i int) int {
 	if i < 0 {
 		return -i

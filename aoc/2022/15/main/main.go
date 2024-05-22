@@ -325,22 +325,6 @@ func mustInt(s string) int {
 	}
 }
 
-func min(a int, b int) int {
-	if a < b {
-		return a
-	} else {
-		return b
-	}
-}
-
-func max(a int, b int) int {
-	if a > b {
-		return a
-	} else {
-		return b
-	}
-}
-
 func abs(i int) int {
 	if i < 0 {
 		return -i

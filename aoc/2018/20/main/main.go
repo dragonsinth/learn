@@ -119,19 +119,3 @@ func (p pos) Walk(d dir) pos {
 func (p pos) String() string {
 	return fmt.Sprintf("(%d,%d)", p.x, p.y)
 }
-
-func min(a int, b int) int {
-	if a < b {
-		return a
-	} else {
-		return b
-	}
-}
-
-func max(a int, b int) int {
-	if a > b {
-		return a
-	} else {
-		return b
-	}
-}

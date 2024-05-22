@@ -254,11 +254,3 @@ type pos struct {
 func (pt pos) String() string {
 	return fmt.Sprintf("(%d,%d)", pt.x, pt.y)
 }
-
-func max(a int, b int) int {
-	if a > b {
-		return a
-	} else {
-		return b
-	}
-}
