@@ -1,14 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"go.uber.org/atomic"
 	"golang.org/x/sync/errgroup"
 	"log"
 	"math"
+	"os"
+	"os/signal"
 	"path/filepath"
-	"strings"
 )
 
 const (
@@ -17,7 +19,9 @@ const (
 )
 
 func main() {
-	if err := run(context.Background()); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	if err := run(ctx); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -94,8 +98,7 @@ func run(ctx context.Context) error {
 					if err != nil {
 						return fmt.Errorf("failed to download: %w", err)
 					}
-					text := string(data)
-					count := len(strings.Fields(text))
+					count := len(bytes.Fields(data))
 					if count >= 2000 && count <= 5000 {
 						select {
 						case <-ctx.Done():
