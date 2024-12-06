@@ -40,15 +40,15 @@ const sample = `
 
 func main() {
 	p, examples := parse(sample)
-	part1(p, examples)
-	part2(p, examples)
+	p.part1(examples)
+	p.part2(examples)
 }
 
-func parse(input string) (puz, [][]int) {
-	p := puz{
+func parse(input string) (*puz, [][]int) {
+	p := &puz{
 		rules: map[int]*rule{},
 	}
-	examples := [][]int{}
+	var examples [][]int
 
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
@@ -61,28 +61,11 @@ func parse(input string) (puz, [][]int) {
 			parts := strings.Split(line, "|")
 			prev, next := mustInt(parts[0]), mustInt(parts[1])
 
-			{
-				r := p.rules[next]
-				if r == nil {
-					r = &rule{
-						page: next,
-					}
-					p.rules[next] = r
-				}
-				r.mustComeAfter = append(r.mustComeAfter, prev)
-			}
+			nextRule := p.getRule(next)
+			nextRule.mustComeAfter = append(nextRule.mustComeAfter, prev)
 
-			{
-				r := p.rules[prev]
-				if r == nil {
-					r = &rule{
-						page: prev,
-					}
-					p.rules[prev] = r
-				}
-				r.mustComeBefore = append(r.mustComeBefore, next)
-			}
-
+			prevRule := p.getRule(prev)
+			prevRule.mustComeBefore = append(prevRule.mustComeBefore, next)
 		} else if strings.Contains(line, ",") {
 			nums := parseNums(line)
 			examples = append(examples, nums)
@@ -93,7 +76,34 @@ func parse(input string) (puz, [][]int) {
 	return p, examples
 }
 
-func part1(p puz, examples [][]int) {
+type rule struct {
+	page           int
+	mustComeAfter  []int
+	mustComeBefore []int
+}
+
+func (r rule) isBefore(n int) bool {
+	return slices.Contains(r.mustComeBefore, n)
+}
+
+func (r rule) isAfter(n int) bool {
+	return slices.Contains(r.mustComeAfter, n)
+}
+
+type puz struct {
+	rules map[int]*rule
+}
+
+func (p *puz) getRule(num int) *rule {
+	if p.rules[num] == nil {
+		p.rules[num] = &rule{
+			page: num,
+		}
+	}
+	return p.rules[num]
+}
+
+func (p *puz) part1(examples [][]int) {
 	sum := 0
 
 	for _, nums := range examples {
@@ -107,7 +117,7 @@ func part1(p puz, examples [][]int) {
 	fmt.Println(sum)
 }
 
-func part2(p puz, examples [][]int) {
+func (p *puz) part2(examples [][]int) {
 	sum := 0
 	for _, nums := range examples {
 		if !p.violates(nums) {
@@ -115,13 +125,13 @@ func part2(p puz, examples [][]int) {
 		}
 
 		slices.SortFunc(nums, func(a, b int) int {
-			r := p.rules[a]
-			if r == nil {
+			aRule := p.rules[a]
+			if aRule == nil {
 				panic("rule not found")
 			}
-			if slices.Contains(r.mustComeBefore, b) {
+			if aRule.isBefore(b) {
 				return -1
-			} else if slices.Contains(r.mustComeAfter, b) {
+			} else if aRule.isAfter(b) {
 				return 1
 			}
 			panic("don't know")
@@ -137,24 +147,14 @@ func part2(p puz, examples [][]int) {
 	fmt.Println(sum)
 }
 
-type rule struct {
-	page           int
-	mustComeAfter  []int
-	mustComeBefore []int
-}
-
-type puz struct {
-	rules map[int]*rule
-}
-
-func (p puz) violates(nums []int) bool {
+func (p *puz) violates(nums []int) bool {
 	if len(nums) < 2 {
 		return false
 	}
 	first, rest := nums[0], nums[1:]
 	firstRule := p.rules[first]
 	for _, num := range rest {
-		if slices.Contains(firstRule.mustComeAfter, num) {
+		if firstRule.isAfter(num) {
 			return true
 		}
 	}
