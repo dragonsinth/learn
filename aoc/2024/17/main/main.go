@@ -26,12 +26,8 @@ func main() {
 
 func part1(ops []byte, a int) {
 	p := &Program{
-		A:   a,
-		B:   0,
-		C:   0,
-		IP:  0,
 		Ops: ops,
-		Out: nil,
+		A:   a,
 	}
 	fmt.Println(stringBytes(p.Run()))
 }
@@ -39,88 +35,6 @@ func part1(ops []byte, a int) {
 func part2(ops []byte) {
 	best = ""
 	fmt.Println(findSolutionBits(ops, 0, 3))
-}
-
-type Program struct {
-	A   int
-	B   int
-	C   int
-	IP  int
-	Ops []byte
-	Out []byte
-}
-
-func (p *Program) Run() []byte {
-	ops := []func(byte){
-		0: p.adv,
-		1: p.bxl,
-		2: p.bst,
-		3: p.jnz,
-		4: p.bxc,
-		5: p.out,
-		6: p.bdv,
-		7: p.cdv,
-	}
-
-	for p.IP = 0; p.IP < len(p.Ops); p.IP += 2 {
-		code, op := p.Ops[p.IP], p.Ops[p.IP+1]
-		ops[code](op)
-	}
-	return p.Out
-}
-
-func (p *Program) adv(op byte) {
-	p.A = p.div(op)
-}
-
-func (p *Program) bxl(op byte) {
-	p.B = p.B ^ int(op)
-}
-
-func (p *Program) bst(op byte) {
-	p.B = p.combo(op) % 8
-}
-
-func (p *Program) jnz(op byte) {
-	if p.A != 0 {
-		p.IP = int(op)
-		p.IP -= 2
-	}
-}
-
-func (p *Program) bxc(_ byte) {
-	p.B = p.B ^ p.C
-}
-
-func (p *Program) out(op byte) {
-	p.Out = append(p.Out, byte(p.combo(op)%8))
-}
-
-func (p *Program) bdv(op byte) {
-	p.B = p.div(op)
-}
-
-func (p *Program) cdv(op byte) {
-	p.C = p.div(op)
-}
-
-func (p *Program) div(op byte) int {
-	return p.A / (1 << p.combo(op))
-}
-
-func (p *Program) combo(op byte) int {
-	switch op {
-	case 0, 1, 2, 3:
-		return int(op)
-	case 4:
-		return p.A
-	case 5:
-		return p.B
-	case 6:
-		return p.C
-	default:
-		panic(op)
-	}
 }
 
 func dump(ops []byte) {
@@ -172,12 +86,8 @@ func findSolution(ops []byte, guess int) int {
 	}
 
 	p := &Program{
-		A:   guess,
-		B:   0,
-		C:   0,
-		IP:  0,
 		Ops: ops,
-		Out: nil,
+		A:   guess,
 	}
 	sol := p.Run()
 
