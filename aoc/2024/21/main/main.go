@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/exp/slices"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -20,8 +20,8 @@ func main() {
 		robot1Pad := computeShortestPaths(directionalPad, humanCosts{})
 		robot2Pad := computeShortestPaths(directionalPad, robotCosts{robot1Pad})
 		finalPad := computeShortestPaths(codePad, robotCosts{robot2Pad})
-		part1(sample, finalPad)
-		// part1(data, finalPad)
+		run(sample, finalPad)
+		// run(data, finalPad)
 	}
 
 	{
@@ -31,12 +31,12 @@ func main() {
 			upper = robotCosts{pad}
 		}
 		finalPad := computeShortestPaths(codePad, upper)
-		part2(sample, finalPad)
-		// part2(data, finalPad)
+		run(sample, finalPad)
+		// run(data, finalPad)
 	}
 }
 
-func part1(input string, pad map[pathKey]path) {
+func run(input string, pad map[pathKey]path) {
 	sum := 0
 	for _, line := range strings.Split(input, "\n") {
 		line = strings.TrimSpace(line)
@@ -44,51 +44,27 @@ func part1(input string, pad map[pathKey]path) {
 			continue
 		}
 
-		exp := expand(pad, line)
-		fmt.Println(len(exp), exp)
-		val := mustInt(line[:3])
-		score := val * len(exp)
-		sum += score
-	}
-	fmt.Println(sum)
-}
-
-func expand(pad map[pathKey]path, input string) string {
-	var sb strings.Builder
-	last := byte('A')
-	for _, c := range input {
-		next := byte(c)
-		sb.WriteString(pad[pathKey{last, next}].path)
-		last = next
-	}
-	return sb.String()
-}
-
-func part2(input string, pad map[pathKey]path) {
-	sum := 0
-	for _, line := range strings.Split(input, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
+		p := compute(pad, line)
+		if p.path != "" {
+			fmt.Println(len(p.path), p.path)
 		}
-
-		sz := compute(pad, line)
 		val := mustInt(line[:3])
-		score := val * sz
+		score := val * p.size
 		sum += score
 	}
 	fmt.Println(sum)
 }
 
-func compute(pad map[pathKey]path, input string) int {
-	sum := 0
+func compute(pad map[pathKey]path, input string) path {
+	var ret path
 	last := byte('A')
 	for _, c := range input {
 		next := byte(c)
-		sum += pad[pathKey{last, next}].size
+		p := pad[pathKey{last, next}]
+		ret = ret.add(p)
 		last = next
 	}
-	return sum
+	return ret
 }
 
 type path struct {
@@ -97,14 +73,12 @@ type path struct {
 }
 
 func (p path) add(other path) path {
-	return path{joinLimit(p.path, other.path), p.size + other.size}
-}
-
-func joinLimit(a string, b string) string {
-	if len(a)+len(b) < 100 {
-		return a + b
+	size := p.size + other.size
+	var pathStr string
+	if size < 100 {
+		pathStr = p.path + other.path
 	}
-	return ""
+	return path{pathStr, size}
 }
 
 type pathKey struct {
@@ -154,16 +128,6 @@ var directionalPad = map[byte]pos{
 	'v': {1, 1},
 	'>': {2, 1},
 }
-
-func mustInt(s string) int {
-	if v, err := strconv.Atoi(s); err != nil {
-		panic(fmt.Sprint(s, err))
-	} else {
-		return v
-	}
-}
-
-// 160588 too high
 
 type UpperPad interface {
 	Press(start, end byte) path
@@ -258,4 +222,12 @@ func findShortestPath(pt1 pos, pt2 pos, posMap map[pos]byte, upper UpperPad, upp
 		return a.size - b.size
 	})
 	return options[0]
+}
+
+func mustInt(s string) int {
+	if v, err := strconv.Atoi(s); err != nil {
+		panic(fmt.Sprint(s, err))
+	} else {
+		return v
+	}
 }

@@ -5,23 +5,23 @@ import (
 	"testing"
 )
 
-func TestExpand(t *testing.T) {
+func TestCompute(t *testing.T) {
 	{
 		robotPad := computeShortestPaths(codePad, humanCosts{})
-		debugPrint(expand(robotPad, "029A"))
+		debugPrint(compute(robotPad, "029A").path)
 		debugPrint("<A^A>^^AvvvA")
 	}
 	{
 		aPad := computeShortestPaths(directionalPad, humanCosts{})
 		bPad := computeShortestPaths(codePad, robotCosts{aPad})
-		debugPrint(expand(bPad, "029A"))
+		debugPrint(compute(bPad, "029A").path)
 		debugPrint("v<<A>>^A<A>AvA<^AA>A<vAAA>^A")
 	}
 	{
 		aPad := computeShortestPaths(directionalPad, humanCosts{})
 		bPad := computeShortestPaths(directionalPad, robotCosts{aPad})
 		cPad := computeShortestPaths(codePad, robotCosts{bPad})
-		debugPrint(expand(cPad, "029A"))
+		debugPrint(compute(cPad, "029A").path)
 		debugPrint("<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A")
 	}
 }
