@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 	"math/rand"
+	"slices"
 	"strings"
 	"time"
 )
@@ -44,8 +43,8 @@ func run(input string, iter int) {
 		id    int
 		score int
 	}
-	resultLess := func(a, b result) bool {
-		return a.score > b.score
+	resultLess := func(a, b result) int {
+		return b.score - a.score
 	}
 
 	var results []result
@@ -254,14 +253,9 @@ func parseGraph(input string) graph {
 			add(src, r)
 		}
 	}
-	slices.SortFunc(pairs, func(p1, p2 edgePair) bool {
-		if p1.a != p2.a {
-			return p1.a < p2.a
-		}
-		return p1.b < p2.b
-	})
+	slices.SortFunc(pairs, edgeSort)
 
-	nodes := maps.Keys(nodeNames)
+	nodes := mapKeys(nodeNames)
 	slices.Sort(nodes)
 
 	g := graph{

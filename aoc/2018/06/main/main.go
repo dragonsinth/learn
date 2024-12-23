@@ -3,10 +3,9 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 const sample = `
@@ -109,8 +108,8 @@ func closest(pts []pt, x int, y int) int {
 		ret = append(ret, res{id: id, dist: pt.dist(x, y)})
 	}
 
-	slices.SortFunc(ret, func(a, b res) bool {
-		return a.dist < b.dist
+	slices.SortFunc(ret, func(a, b res) int {
+		return a.dist - b.dist
 	})
 
 	if ret[0].dist < ret[1].dist {

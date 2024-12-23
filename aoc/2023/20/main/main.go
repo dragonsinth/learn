@@ -116,3 +116,11 @@ func parse(input string) puz {
 	}
 	return p
 }
+
+func mapKeys[K comparable, V any](in map[K]V) []K {
+	var ret []K
+	for k := range in {
+		ret = append(ret, k)
+	}
+	return ret
+}

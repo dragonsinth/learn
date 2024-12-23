@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/dragonsinth/learn/aoc/grid"
 	"github.com/dragonsinth/learn/aoc/termbox"
-	"golang.org/x/exp/slices"
 	"os"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -110,8 +110,8 @@ func parse(input string) puz {
 		b.len = b.b[b.dim] - b.a[b.dim]
 		p.blocks = append(p.blocks, b)
 	}
-	slices.SortFunc(p.blocks, func(a, b block) bool {
-		return a.min(Z) < b.min(Z)
+	slices.SortFunc(p.blocks, func(a, b block) int {
+		return a.min(Z) - b.min(Z)
 	})
 	p.bbz = newBlocksByZ(p.blocks)
 	return p
@@ -125,11 +125,11 @@ type puz struct {
 func (p puz) Render(d dim, neg bool) [][]byte {
 	// sort along the view dimension, from back to front (painters)
 	blocks := slices.Clone(p.blocks)
-	slices.SortFunc(blocks, func(a, b block) bool {
+	slices.SortFunc(blocks, func(a, b block) int {
 		if neg {
-			return a.min(d) < b.min(d)
+			return a.min(d) - b.min(d)
 		} else {
-			return a.max(d) > b.max(d)
+			return b.max(d) - a.max(d)
 		}
 	})
 

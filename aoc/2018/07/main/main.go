@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/exp/slices"
 	"regexp"
+	"slices"
 	"strings"
-
-	_ "golang.org/x/exp/slices"
 )
 
 const sample = `
@@ -133,8 +131,8 @@ func readyNode(nodes map[id]*node) *node {
 		return nil
 	}
 
-	slices.SortFunc(ready, func(a, b *node) bool {
-		return a.id < b.id
+	slices.SortFunc(ready, func(a, b *node) int {
+		return strings.Compare(string(a.id), string(b.id))
 	})
 	return ready[0]
 }

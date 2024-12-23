@@ -2,8 +2,7 @@ package main
 
 import (
 	"fmt"
-
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 type graph struct {
@@ -99,8 +98,8 @@ func (g graph) findAllRoutes(either bool, debug bool) []route {
 			maybeTraverseEdge(rt, e, e.dst)
 		}
 	}
-	slices.SortFunc(complete, func(a, b route) bool {
-		return a.len > b.len
+	slices.SortFunc(complete, func(a, b route) int {
+		return b.len - a.len
 	})
 	return complete
 }

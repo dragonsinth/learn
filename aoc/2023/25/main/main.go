@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 	"io"
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -44,6 +43,13 @@ type edgePair struct {
 	a, b string
 }
 
+func edgeSort(p1, p2 edgePair) int {
+	if p1.a != p2.a {
+		return strings.Compare(p1.a, p2.a)
+	}
+	return strings.Compare(p1.b, p2.b)
+}
+
 func parse(input string) ([]edgePair, []string) {
 	nodes := map[string]bool{}
 	var pairs []edgePair
@@ -68,15 +74,18 @@ func parse(input string) ([]edgePair, []string) {
 			add(src, r)
 		}
 	}
-	slices.SortFunc(pairs, func(p1, p2 edgePair) bool {
-		if p1.a != p2.a {
-			return p1.a < p2.a
-		}
-		return p1.b < p2.b
-	})
+	slices.SortFunc(pairs, edgeSort)
 
-	n := maps.Keys(nodes)
+	n := mapKeys(nodes)
 	slices.Sort(n)
 
 	return pairs, n
+}
+
+func mapKeys[K comparable, V any](in map[K]V) []K {
+	var ret []K
+	for k := range in {
+		ret = append(ret, k)
+	}
+	return ret
 }

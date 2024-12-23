@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/dragonsinth/learn/aoc/termbox"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 	"os"
+	"slices"
 	"strings"
 	"time"
 )
@@ -183,11 +182,11 @@ func (c car) Next() pos {
 	return p
 }
 
-func carSort(a, b car) bool {
+func carSort(a, b car) int {
 	if a.p.y != b.p.y {
-		return a.p.y < b.p.y
+		return a.p.y - b.p.y
 	}
-	return a.p.x < b.p.x
+	return a.p.x - b.p.x
 }
 
 func sortCars(cars []car) []car {
@@ -204,7 +203,7 @@ type puz struct {
 
 func (p *puz) Tick() {
 	// run each car in order
-	for _, c := range sortCars(maps.Values(p.cars)) {
+	for _, c := range sortCars(mapValues(p.cars)) {
 		if _, ok := p.cars[c.p]; !ok {
 			// must have crashed
 			continue
@@ -283,4 +282,12 @@ func (p *puz) Render() [][]byte {
 		buf = append(buf, line)
 	}
 	return buf
+}
+
+func mapValues[K comparable, V any](in map[K]V) []V {
+	var ret []V
+	for _, v := range in {
+		ret = append(ret, v)
+	}
+	return ret
 }

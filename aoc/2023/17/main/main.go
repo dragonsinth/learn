@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/dragonsinth/learn/aoc/sliceheap"
 	"github.com/dragonsinth/learn/aoc/termbox"
-	"golang.org/x/exp/slices"
 	"os"
+	"slices"
 	"strings"
 )
 

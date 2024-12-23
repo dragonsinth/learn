@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 var sample = `

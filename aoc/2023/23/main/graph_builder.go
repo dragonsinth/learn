@@ -2,8 +2,7 @@ package main
 
 import (
 	"fmt"
-
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 func (p puz) computeGraph(start, dest pos, debug bool) graph {
@@ -136,11 +135,11 @@ func (p puz) computeGraph(start, dest pos, debug bool) graph {
 			y:  p.y,
 		})
 	}
-	slices.SortFunc(g.nodes, func(a, b node) bool {
+	slices.SortFunc(g.nodes, func(a, b node) int {
 		if a.y != b.y {
-			return a.y < b.y // ensures start at node 0, end at last node.
+			return a.y - b.y // ensures start at node 0, end at last node.
 		}
-		return a.x < b.x // doesn't matter
+		return a.x - b.x // doesn't matter
 	})
 	nodesByPos := map[pos]nodeId{}
 	for i := range g.nodes {

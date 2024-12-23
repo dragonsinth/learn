@@ -6,10 +6,8 @@ import (
 	"github.com/dragonsinth/learn/aoc/termbox"
 	"math"
 	"os"
+	"slices"
 	"time"
-
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 type puz struct {
@@ -26,8 +24,8 @@ type puz struct {
 
 func (p *puz) Tick() bool {
 	// run each unit in order
-	units := maps.Values(p.units)
-	slices.SortFunc(units, func(a, b *unit) bool {
+	units := mapValues(p.units)
+	slices.SortFunc(units, func(a, b *unit) int {
 		return readOrderPosLess(a.p, b.p)
 	})
 
@@ -68,14 +66,14 @@ func (p *puz) Attack(u unit) {
 	if len(targets) == 0 {
 		return
 	}
-	slices.SortFunc(targets, func(a *unit, b *unit) bool {
+	slices.SortFunc(targets, func(a *unit, b *unit) int {
 		if a.hp != b.hp {
-			return a.hp < b.hp
+			return a.hp - b.hp
 		}
 		if a.p.y != b.p.y {
-			return a.p.y < b.p.y
+			return a.p.y - b.p.y
 		}
-		return a.p.x < b.p.x
+		return a.p.x - b.p.x
 	})
 
 	t := targets[0]
@@ -168,7 +166,7 @@ func (p *puz) Move(u unit) *pos {
 	}
 
 	// Pick the best reachable target in read order
-	reachPos := maps.Keys(reachable)
+	reachPos := mapKeys(reachable)
 	slices.SortFunc(reachPos, readOrderPosLess)
 	pth := reachable[reachPos[0]]
 
@@ -262,4 +260,12 @@ func (p *puz) hpSum() int {
 		sum += u.hp
 	}
 	return sum
+}
+
+func mapValues[K comparable, V any](in map[K]V) []V {
+	var ret []V
+	for _, v := range in {
+		ret = append(ret, v)
+	}
+	return ret
 }

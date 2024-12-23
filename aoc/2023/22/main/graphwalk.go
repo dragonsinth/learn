@@ -1,6 +1,6 @@
 package main
 
-import "golang.org/x/exp/slices"
+import "slices"
 
 func graphWalk(deps [][]int, rdeps [][]int) int {
 	sum := 0

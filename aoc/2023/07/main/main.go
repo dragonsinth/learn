@@ -3,10 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 var sample = `
@@ -27,11 +26,11 @@ func (h hand) String() string {
 	return fmt.Sprintf("%s, %d = %d", string(h.cards), h.rank, h.bid)
 }
 
-func rankSort(a, b hand) bool {
+func rankSort(a, b hand) int {
 	if a.rank != b.rank {
-		return a.rank < b.rank
+		return int(a.rank - b.rank)
 	}
-	return bytes.Compare(a.cards, b.cards) < 0
+	return bytes.Compare(a.cards, b.cards)
 }
 
 type rank int

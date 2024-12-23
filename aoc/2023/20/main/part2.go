@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/exp/maps"
 	"sort"
 	"strings"
 )
@@ -10,7 +9,7 @@ import (
 func (p puz) memDump(mem memory, step int) (string, bool) {
 	ok := true
 	var sb strings.Builder
-	keys := maps.Keys(p.nodes)
+	keys := mapKeys(p.nodes)
 	sort.Strings(keys)
 	for _, k := range keys {
 		p := mem.vals[k]

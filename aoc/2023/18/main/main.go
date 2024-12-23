@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/dragonsinth/learn/aoc/grid"
 	"github.com/dragonsinth/learn/aoc/termbox"
-	"golang.org/x/exp/slices"
 	"os"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -102,11 +102,11 @@ func parse(input string, part2 bool) puz {
 		p.ymin = min(p.ymin, y)
 		p.ymax = max(p.ymax, y)
 	}
-	slices.SortFunc(p.cols, func(a, b col) bool {
+	slices.SortFunc(p.cols, func(a, b col) int {
 		if a.x != b.x {
-			return a.x < b.x
+			return a.x - b.x
 		}
-		return a.ymin < b.ymin
+		return a.ymin - b.ymin
 	})
 	return p
 }

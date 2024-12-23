@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/dragonsinth/learn/aoc/termbox"
-	"golang.org/x/exp/maps"
+	"maps"
 	"os"
 	"strings"
 )

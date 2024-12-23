@@ -197,11 +197,11 @@ func (p pos) adjacent() [4]pos {
 	}
 }
 
-func readOrderPosLess(a, b pos) bool {
+func readOrderPosLess(a, b pos) int {
 	if a.y != b.y {
-		return a.y < b.y
+		return a.y - b.y
 	}
-	return a.x < b.x
+	return a.x - b.x
 }
 
 type wat byte
@@ -215,4 +215,12 @@ type unit struct {
 	p   pos
 	hp  int
 	typ wat
+}
+
+func mapKeys[K comparable, V any](in map[K]V) []K {
+	var ret []K
+	for k := range in {
+		ret = append(ret, k)
+	}
+	return ret
 }

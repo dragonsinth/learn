@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/dragonsinth/learn/aoc/2018/asm"
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 const data = `
