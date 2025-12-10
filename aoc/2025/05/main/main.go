@@ -31,7 +31,7 @@ func main() {
 	fmt.Println(countAllFresh(rngs))
 }
 
-func countAllFresh(rngs []rng) any {
+func countAllFresh(rngs []rng) int {
 	slices.SortFunc(rngs, func(a, b rng) int {
 		if a.lo != b.lo {
 			return a.lo - b.lo
