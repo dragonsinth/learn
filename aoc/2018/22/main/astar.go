@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/dragonsinth/learn/aoc/sliceheap"
+	"iter"
+
+	"github.com/dragonsinth/learn/aoc/astar"
 )
 
 const (
@@ -68,69 +70,59 @@ func (p path) Walk() []path {
 }
 
 func (p *puz) Astar() path {
-	heuristic := func(l loc) int {
-		manh := abs(p.dst.x-l.x) + abs(p.dst.y-l.y)
-		if l.g != p.dst.g {
+	start := path{
+		prev: nil,
+		l:    p.src,
+		cost: 0,
+	}
+
+	heuristic := func(pt path) int {
+		manh := abs(p.dst.x-pt.l.x) + abs(p.dst.y-pt.l.y)
+		if pt.l.g != p.dst.g {
 			manh += swapCost
 		}
 		return manh
 	}
 
-	cost := func(pt path) int {
-		return pt.cost + heuristic(pt.l)
-	}
-
-	work := sliceheap.New[path](func(a, b path) bool {
-		return cost(a) < cost(b)
-	})
-
-	work.Push(path{
-		prev: nil,
-		l:    p.src,
-		cost: 0,
-	})
-
-	for {
-		w := work.Pop()
-		if p.Cost(w.l) <= w.cost {
-			continue // already found a cheaper route to this spot
-		}
-		p.SetCost(w.l, w.cost)
-
-		if w.l == p.dst {
-			return w
-		}
-
-		// try moving
-		for _, l := range w.l.adjacent() {
-			if p.passable(l) {
-				work.Push(path{
-					prev: &w,
-					l:    l,
-					cost: w.cost + 1,
-				})
+	neighbors := func(pt path) iter.Seq[path] {
+		return func(yield func(path) bool) {
+			// try moving
+			for _, l := range pt.l.adjacent() {
+				if p.passable(l) {
+					next := path{
+						prev: &pt,
+						l:    l,
+						cost: pt.cost + 1,
+					}
+					if !yield(next) {
+						return
+					}
+				}
 			}
-		}
 
-		// try switching
-		for _, l := range w.l.swapGear() {
-			if p.passable(l) {
-				work.Push(path{
-					prev: &w,
-					l:    l,
-					cost: w.cost + swapCost,
-				})
+			// try switching
+			for _, l := range pt.l.swapGear() {
+				if p.passable(l) {
+					next := path{
+						prev: &pt,
+						l:    l,
+						cost: pt.cost + swapCost,
+					}
+					if !yield(next) {
+						return
+					}
+				}
 			}
 		}
 	}
-}
 
-func (p *puz) Cost(l loc) int {
-	return p.cost[l.g][l.y][l.x]
-}
-
-func (p *puz) SetCost(l loc, cost int) {
-	p.cost[l.g][l.y][l.x] = cost
+	return astar.RunConsistent[path, loc](
+		start,
+		func(pt path) loc { return pt.l },
+		func(pt path) int { return pt.cost },
+		heuristic,
+		neighbors,
+	)
 }
 
 func (p *puz) passable(l loc) bool {

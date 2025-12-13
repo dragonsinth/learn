@@ -27,7 +27,6 @@ type puz struct {
 	dst   loc
 
 	erosion [][]int
-	cost    [gearCount][][]int
 }
 
 func (p *puz) Render() [][]byte {

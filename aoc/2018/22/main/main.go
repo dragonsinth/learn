@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/dragonsinth/learn/aoc/grid"
 	"github.com/dragonsinth/learn/aoc/termbox"
-	"math"
-	"os"
 )
 
 var (
@@ -27,10 +27,6 @@ func run(p *puz, debug bool) {
 	fmt.Println(p.Risk())
 	if debug {
 		termbox.RenderPlain(p.Render(), os.Stdout)
-	}
-
-	for i := 0; i < 3; i++ {
-		p.cost[i] = grid.Alloc2d(p.w, p.h, math.MaxInt)
 	}
 
 	pth := p.Astar()
